@@ -588,6 +588,9 @@ body *:not(.ttl):not(.fin):not(.hero h1){letter-spacing:0!important;}
 .exp>div>b{margin:.2rem 0 .2rem;}
 .ackbig{align-self:end;border-radius:8px;background:rgba(24,20,16,.88);padding:1rem 1.4rem 1rem 1.4rem !important;font-size:1.35rem;}
 .ackbig .small{margin-top:.45rem;}
+
+/* p97 : diapo « ende » – voile limité au haut (titre + dates), la photo du traité en bas à gauche reste entièrement visible */
+.slide.scrim.scrimTop::before{bottom:auto;height:calc(20rem + 52vh);-webkit-mask-image:linear-gradient(180deg,#000 calc(100% - 7vh),transparent);mask-image:linear-gradient(180deg,#000 calc(100% - 7vh),transparent);}
 </style>
 <!-- Bibliothèques intégrées (hors ligne) : three.js r169 + GLTFLoader + GSAP 3.12.5 (licences MIT / « no charge » GreenSock) -->
 <script>
@@ -178803,7 +178806,7 @@ Object.entries(GOODS).forEach(([port, [ll, tw, kinds]]) => {
     pen.visible = q > .001; pen.position.set(.29 + (1 - q) * .55, pr + .004, -.05); pen.rotation.set(0, .35, 0); pen.rotateZ(Math.PI / 2); pen.rotateY(roll); });
 })();
 /* p65 : cachet et sceau de cire (A9908244, CC BY) posés près de Versailles sur la diapositive « Ende » ; descendent en se posant */
-(() => { const g = new THREE.Group(), c = { x: -4.3, z: 1.9 }, s1 = new THREE.Group(); g.add(s1);
+(() => { const g = new THREE.Group(), c = { x: -2.5, z: 2.2 }   /* p97 : à droite de la photo du traité agrandie */, s1 = new THREE.Group(); g.add(s1);
   const y0 = footRelief(c.x, c.z, .5, .4).max; g.position.set(c.x, y0, c.z); g.rotation.y = -.35;
   realOnce('seal').then(sc => { s1.add(fitModel(sc, { L: .72, env: .6, y0: -.003 })); markDirty(); }).catch(e => console.info('[siegel]', e && e.message));
   addProp('Siegel_1919', ['ende'], g, (P, p) => { const e = THREE.MathUtils.clamp(p, 0, 1), k = 1 - Math.pow(1 - e, 3);
@@ -178946,7 +178949,67 @@ const WW = (() => {
     const G = { n, s: side(n, lon), en, o, t: 1.2 + i * .55, fx: [] }; guns.push(G);
     const fl = new THREE.Sprite(FLASH.clone()); fl.visible = false; g.add(fl); const sh = new THREE.Mesh(SHELL_G, SHELL_M); sh.visible = false; sh.castShadow = true; g.add(sh);
     const pf = new THREE.Sprite(PUFF.clone()); pf.visible = false; g.add(pf); G.fl = fl; G.sh = sh; G.pf = pf; G.tr = trail(); g.add(G.tr.m); });
-  MEN.forEach(([n, lon, lat]) => { const o = manMesh(n); ground(o, lon, lat); o.rotation.y = (n === 'fr' || (n === 'de' && lon > 12)) ? Math.PI / 2 : -Math.PI / 2;   // face à l'ennemi
+  /* p88 : tranchées 1914–18 – une par camp (FR, DE-ouest, DE-est, RU), tracé en zigzag le long du front, posées sur le relief ;
+     section : bord au niveau du sol → parapet clair (sacs de terre) → lèvre → fond sombre → … ; une seule géométrie fusionnée, couleurs par sommet. */
+  /* p89 : fronts allongés (~×3) – ouest : Manche/Belgique → Suisse ; est : longue ligne nord–sud. [lon0, lat0, lon1, lat1] */
+  const TRENCH = { fr: [3.3, 51.05, 4.9, 47.7], dw: [6.3, 51.2, 7.2, 47.75], de: [16.6, 54.4, 17.6, 49.5], ru: [24.6, 56.6, 25.8, 50.0] }, TPTS = {};
+  /* p90 : tranchée plus profonde (parapet +3,8 cm, fond très sombre), parois en planches (teinte bois alternée), contraste du parapet adouci */
+  { const XS = [-.099, -.075, -.052, -.046, -.03, .03, .046, .052, .075, .099], YS = [0, .012, .010, .009, .001, .001, .009, .010, .012, 0],   // p91 : parapet ~60 % (largeur + hauteur)
+      CS = [0x48423A, 0x4C463C, 0x3E372E, 0x463A2B, 0x100D0A, 0x100D0A, 0x463A2B, 0x3E372E, 0x4C463C, 0x48423A]   /* p94 : remblai terreux bas, les sacs sont des instances */.map(c => new THREE.Color(c)), NS = XS.length, WOODC = [3, 6];
+    const pos = [], col = [], idx = []; let base = 0;
+    Object.entries(TRENCH).forEach(([sd, [lo0, la0, lo1, la1]]) => { const C = [], dl = lo1 - lo0, db = la1 - la0, Ld = Math.hypot(dl, db), K = Math.round(Ld / .12);
+      for (let k = 0; k <= K; k++) { const t = k / K, o = k % 2 ? .045 : -.045; C.push(llW(lo0 + dl * t - db / Ld * o, la0 + db * t + dl / Ld * o)); }
+      const P = []; for (let i = 0; i < C.length - 1; i++) for (let j = 0; j < 4; j++) P.push(C[i].clone().lerp(C[i + 1], j / 4)); P.push(C[C.length - 1]); TPTS[sd] = P;
+      P.forEach((p, i) => { const a = P[Math.max(0, i - 1)], b = P[Math.min(P.length - 1, i + 1)], tx = b.x - a.x, tz = b.z - a.z, L = Math.hypot(tx, tz) || 1, px = -tz / L, pz = tx / L;
+        for (let c = 0; c < NS; c++) { const x = p.x + px * XS[c], z = p.z + pz * XS[c], f = WOODC.includes(c) && i % 2 ? .88 : 1; pos.push(x, relief(x, z) + .004 + YS[c], z); col.push(CS[c].r * f, CS[c].g * f, CS[c].b * f); }
+        if (i) for (let c = 0; c < NS - 1; c++) { const q = base + (i - 1) * NS + c, r = q + NS; idx.push(q, r, q + 1, q + 1, r, r + 1); } });
+      base += P.length * NS; });
+    const tg = new THREE.BufferGeometry(); tg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); tg.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); tg.setIndex(idx); tg.computeVertexNormals();
+    const tm = new THREE.Mesh(tg, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, metalness: 0, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
+    tm.receiveShadow = true; tm.userData.fx = true; tm.name = 'WW1_trenches'; g.add(tm);
+    /* p94 : sacs de sable individuels (1 InstancedMesh, aléa à graine fixe) – jitter position/rotation/taille/hauteur, trous, sacs doublés, gris toile varié */
+    { let sd0 = 1914; const rnd = () => { sd0 = (sd0 + 0x6D2B79F5) | 0; let t = Math.imul(sd0 ^ (sd0 >>> 15), 1 | sd0); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+      const BG = [], c0 = new THREE.Color(0x9A968C), c1 = new THREE.Color(0xA8A49A);
+      Object.values(TPTS).forEach(P => { for (let i = 0; i < P.length - 1; i++) { const a = P[i], b = P[i + 1], tx = b.x - a.x, tz = b.z - a.z, L = Math.hypot(tx, tz) || 1, nx = -tz / L, nz = tx / L, yaw = Math.atan2(-tz, tx);
+        for (let u = rnd() * .02; u < L; u += .026 + rnd() * .012) [-1, 1].forEach(sg => { if (rnd() < .12) return;
+          const off = sg * (.066 + (rnd() - .5) * .018), x = a.x + tx * u / L + nx * off, z = a.z + tz * u / L + nz * off, y = relief(x, z) + .016 + (rnd() - .5) * .004;
+          const sz = .85 + rnd() * .35, ry = yaw + (rnd() - .5) * .6; BG.push([x, y, z, ry, sz, rnd()]);
+          if (rnd() < .25) BG.push([x + (rnd() - .5) * .012, y + .015 * sz, z + (rnd() - .5) * .012, ry + (rnd() - .5) * .8, sz * (.8 + rnd() * .2), rnd()]); }); } });
+      const bm = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 7, 4), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1, metalness: 0 }), BG.length);
+      const M4 = new THREE.Matrix4(), Q = new THREE.Quaternion(), E = new THREE.Euler(), T = new THREE.Vector3(), S = new THREE.Vector3(), C = new THREE.Color();
+      BG.forEach(([x, y, z, ry, sz, r], i) => { bm.setMatrixAt(i, M4.compose(T.set(x, y, z), Q.setFromEuler(E.set((rnd() - .5) * .25, ry, (rnd() - .5) * .25)), S.set(.021 * sz, .0095 * sz * (.85 + rnd() * .3), .013 * sz)));
+        bm.setColorAt(i, C.copy(c0).lerp(c1, r).multiplyScalar(.94 + rnd() * .1)); });
+      bm.receiveShadow = true; bm.userData.fx = true; bm.frustumCulled = false; bm.name = 'WW1_sandbags'; g.add(bm); }
+    /* p90 : défenses côté ennemi – barbelés (piquets instanciés + fils en LineSegments fusionnés) et chevaux de frise (croix en X instanciées) */
+    const ENEMY = { fr: 'dw', dw: 'fr', de: 'ru', ru: 'de' }, cen = sd => TPTS[sd].reduce((a, p) => a.add(p), new THREE.Vector3()).multiplyScalar(1 / TPTS[sd].length);
+    const pk = [], cx = [], wl = [], M4 = new THREE.Matrix4(), Q = new THREE.Quaternion(), E = new THREE.Euler(), S1 = new THREE.Vector3(1, 1, 1), T = new THREE.Vector3();
+    Object.keys(TPTS).forEach(sd => { const P = TPTS[sd], ce = cen(ENEMY[sd]), cs = cen(sd); let prev = null;
+      P.forEach((p, i) => { const a = P[Math.max(0, i - 2)], b = P[Math.min(P.length - 1, i + 2)], tx = b.x - a.x, tz = b.z - a.z, L = Math.hypot(tx, tz) || 1; let px = -tz / L, pz = tx / L;
+        if (px * (ce.x - cs.x) + pz * (ce.z - cs.z) < 0) { px = -px; pz = -pz; }
+        if (i % 2 === 0) { const x = p.x + px * .21, z = p.z + pz * .21, y = groundAt(x, z, .01, .01).y; pk.push([x, y, z]);
+          const top = [x, y + .042, z], mid = [x, y + .022, z]; if (prev) wl.push(...prev[0], ...top, ...prev[1], ...top); /* p91 : 2 brins */ prev = [top, mid]; }
+        if (i % 9 === 4) { const x = p.x + px * .3, z = p.z + pz * .3, y = groundAt(x, z, .02, .02).y, yaw = Math.atan2(-pz, px); [-1, 1].forEach(sg => cx.push([x, y + .016, z, yaw, sg])); } }); });
+    const WD = new THREE.MeshStandardMaterial({ color: 0x5A4A36, roughness: .95 });
+    const pkM = new THREE.InstancedMesh(new THREE.BoxGeometry(.004, .05, .004).translate(0, .025, 0), WD, pk.length);
+    pk.forEach(([x, y, z], i) => pkM.setMatrixAt(i, M4.compose(T.set(x, y, z), Q.identity(), S1)));
+    const cxM = new THREE.InstancedMesh(new THREE.BoxGeometry(.006, .046, .006), WD, cx.length);
+    cx.forEach(([x, y, z, yaw, sg], i) => cxM.setMatrixAt(i, M4.compose(T.set(x, y, z), Q.setFromEuler(E.set(sg * .75, yaw, 0, 'YXZ')), S1)));
+    const wg = new THREE.BufferGeometry(); wg.setAttribute('position', new THREE.Float32BufferAttribute(wl, 3));
+    const wM = new THREE.LineSegments(wg, new THREE.LineBasicMaterial({ color: 0x3A3530, transparent: true, opacity: .5, depthWrite: false }));
+    [pkM, cxM, wM].forEach(o => { o.userData.fx = true; o.frustumCulled = false; if (o.isMesh) o.castShadow = true; g.add(o); }); }
+  /* p92 : canons reculés derrière la tranchée de leur camp (côté opposé à l'ennemi, écart net ; parapet ≤ 10 cm, canon ≈ 53 cm) */
+  { const EN = { fr: 'dw', dw: 'fr', de: 'ru', ru: 'de' }, cen = sd => TPTS[sd].reduce((a, p) => a.add(p), new THREE.Vector3()).multiplyScalar(1 / TPTS[sd].length);
+    guns.forEach(G => { const P = TPTS[G.s], ce = cen(EN[G.s]), cs = cen(G.s); let bi = 0, bd = 1e9;
+      P.forEach((p, i) => { const d = (p.x - G.o.position.x) ** 2 + (p.z - G.o.position.z) ** 2; if (d < bd) { bd = d; bi = i; } });
+      const a = P[Math.max(0, bi - 3)], b = P[Math.min(P.length - 1, bi + 3)], tx = b.x - a.x, tz = b.z - a.z, L = Math.hypot(tx, tz) || 1; let px = -tz / L, pz = tx / L;
+      if (px * (ce.x - cs.x) + pz * (ce.z - cs.z) > 0) { px = -px; pz = -pz; }
+      const x = P[bi].x + px * .5, z = P[bi].z + pz * .5, Gd = groundAt(x, z, .06, .06); G.o.position.set(x, Gd.y, z); G.o.userData.n = Gd.n; }); }
+  const TR_SINK = .12;   // p90 : plus profond – visibles de la poitrine vers le haut   // soldats debout dans la tranchée : bas du corps sous le parapet
+  const MSN = {}, MSI = {}; MEN.forEach(([n, lon]) => { const sd = side(n, lon); MSN[sd] = (MSN[sd] || 0) + 1; });
+  MEN.forEach(([n, lon, lat]) => { const o = manMesh(n); ground(o, lon, lat);
+    { const sd = side(n, lon), P = TPTS[sd], j = (MSI[sd] = (MSI[sd] || 0) + 1) - 1;   // p95 : répartis sur toute la longueur de la tranchée (+ léger aléa fixe)
+      const bi = Math.max(1, Math.min(P.length - 2, Math.round(((j + .5) / MSN[sd] + (((j * 7919 + lon * 100) % 13) / 13 - .5) * .08) * (P.length - 1))));
+      const q = P[bi], G = groundAt(q.x, q.z, .03, .03); o.position.set(q.x, G.y - TR_SINK, q.z); } o.rotation.y = (n === 'fr' || (n === 'de' && lon > 12)) ? Math.PI / 2 : -Math.PI / 2;   // face à l'ennemi
     o.traverse(m => { if (m.isMesh) m.castShadow = true; }); g.add(o); men[n].push({ n, s: side(n, lon), o }); });
   /* modèles réels : canon de campagne (Lukas Bobor, CC BY 4.0) et soldat (Chernov-Egor, CC BY 4.0) – un seul modèle chacun, uniformes teintés par nation */
   const vv = new THREE.Vector3();
@@ -179615,8 +179678,8 @@ const SLIDES = [
   /* 14 · KAPITEL V – ENDE DES KOLONIALREICHS */
   { id: 'ende', tick: 6, head: 6, hideModel: true, scrim: true, frame: { c: [1.5, 0, .3], az: 0, el: 52, dist: 9.5, at: cc([6, 13, 4, 11]) },   /* p85 : l'Europe (France → Russie) bien visible */
     planes: [
-      { img: 'spiegelsaal.webp', area: [8, 11, 1, 4], d: 5.4, cap: 's7.capSaal' },
-      { img: 'treaty.webp', area: [11, 13, 1, 4], d: 5.2 },
+      { img: 'spiegelsaal.webp', area: [9, 13, 1, 6], d: 5.4, cap: 's7.capSaal', align: 'r' },   /* p97 : ~1.3× v12l (au-dessus de la tranchée russe), en haut à droite */
+      { img: 'treaty.webp', area: [1, 5, 7, 13], d: 5.2 },   /* p97 : plus grand, en bas à gauche (hors scrim : scrimTop) */
       { img: 'soldat.webp', area: [12, 13, 9, 13], d: 4.4, cut: true },   /* p82 : zone libre entre Lettow-Vorbeck et le cartel « Wer bekam » (aucun texte, hors scrim) */
       { img: 'lettow.webp', area: [10, 12, 9, 13], d: 4.6, cut: true, cap: 's7.capLettow' }
     ],
@@ -179673,7 +179736,7 @@ const SLIDES = [
 function buildUI() {
   $('#head').innerHTML = H(F.head);
   SLIDES.forEach((s, i) => {
-    const sec = section(i, s.scrim ? 'scrim' : '');
+    const sec = section(i, s.scrim ? 'scrim' + (s.id === 'ende' ? ' scrimTop' : '') : '');
     s.sec = sec;
     if (s.head != null) runhead(sec, s.head);
     s.build(sec);
