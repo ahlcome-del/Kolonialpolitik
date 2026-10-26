@@ -178881,15 +178881,17 @@ REAL_PROPS.forEach(R => { const g = new THREE.Group(), inst = new THREE.Group();
   const PP = addProp(R.name, R.slides, g, (P, p) => { const e = THREE.MathUtils.clamp(p, 0, 1), k = 1 - Math.pow(1 - e, 3);
     inst.position.y = .35 * (1 - k); inst.rotation.y = .5 * (1 - k); inst.scale.setScalar(Math.max(.6 + .4 * k, .001)); inst.visible = e > .01; g.visible = e > .005; }); PP.c = g.position.clone(); });
 /* ============ p85 : 1914–1918 – petite scène animée en Europe (diapo « ende ») : canons + soldats par nation, obus en cloche ============ */
-const WW_S = 4.2;   // échelle des figurines (lisibles à la distance de la diapo)
+const WW_S = 4.62;   // p87 : 4.2 × 1.1 ; échelle des figurines (lisibles à la distance de la diapo)
 const WW = (() => {
   const NAT = {
     fr: { col: 0x6F8FAF, dark: 0x4E6A86, helm: 'adrian' },
     de: { col: 0x707874, dark: 0x4D5040, helm: 'stahl' },
     ru: { col: 0x7A7550, dark: 0x5A5638, helm: 'cap' } };
   /* positions (lon, lat) ; cible = nation ennemie */
-  const GUNS = [['fr', 2.9, 49.35, 'de'], ['fr', 3.4, 48.55, 'de'], ['de', 7.7, 49.9, 'fr'], ['de', 7.3, 50.75, 'fr'],
+  /* p86 : fronts – 'dw' = Allemagne ouest, 'de' = Allemagne est ; FR ↔ DE-ouest, DE-est ↔ RU (jamais FR ↔ RU) */
+  const GUNS = [['fr', 2.9, 49.35, 'dw'], ['fr', 3.4, 48.55, 'dw'], ['de', 7.7, 49.9, 'fr'], ['de', 7.3, 50.75, 'fr'],
     ['de', 17.6, 53.3, 'ru'], ['de', 18.3, 52.2, 'ru'], ['ru', 26.2, 53.7, 'de'], ['ru', 26.9, 52.3, 'de']];
+  const side = (n, lon) => n === 'de' ? (lon < 12 ? 'dw' : 'de') : n;
   const MEN = [['fr', 3.9, 49.6], ['fr', 4.3, 48.9], ['fr', 3.6, 49.95], ['de', 6.9, 50.3], ['de', 6.7, 49.4], ['de', 16.7, 52.8], ['de', 17.0, 53.75],
     ['ru', 25.0, 53.2], ['ru', 25.4, 52.4], ['ru', 24.7, 54.0]];
   const g = new THREE.Group(), units = [], guns = [], men = { fr: [], de: [], ru: [] };
@@ -178918,13 +178920,34 @@ const WW = (() => {
   const FLASH = new THREE.SpriteMaterial({ map: tex('rgba(255,235,170,1)', 'rgba(255,140,40,0)'), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true });
   const PUFF = new THREE.SpriteMaterial({ map: tex('rgba(150,140,125,.9)', 'rgba(150,140,125,0)'), depthWrite: false, transparent: true });
   const SHELL_G = new THREE.SphereGeometry(.026, 8, 6), SHELL_M = std(0x1A1A1A, .5, .4);
-  const target = n => { const L = men[n].concat(guns.filter(G => G.n === n)); return L[Math.floor(Math.random() * L.length)]; };
+  const target = sd => { const L = men[sd === 'dw' ? 'de' : sd].filter(M => M.s === sd).concat(guns.filter(G => G.s === sd)); return L[Math.floor(Math.random() * L.length)]; };
+  /* p86 : traînée de fumée blanche fine derrière l'obus – ruban face caméra, N points datés (anneau), alpha/largeur selon l'âge ;
+     après l'impact plus aucun point n'est ajouté → la traînée s'efface d'elle-même (TR_LIFE). Tampons alloués une fois. */
+  const TR_N = 28, TR_LIFE = .75, TR_W0 = .008, TR_W1 = .03, TR_A = .7;
+  const TR_M = new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, depthWrite: false, side: THREE.DoubleSide, fog: false });
+  const TR_IDX = []; for (let i = 0; i < TR_N - 1; i++) { const a = 2 * i; TR_IDX.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
+  function trail() { const geo = new THREE.BufferGeometry(), pos = new Float32Array(TR_N * 6), col = new Float32Array(TR_N * 8).fill(1);
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3).setUsage(THREE.DynamicDrawUsage)); geo.setAttribute('color', new THREE.BufferAttribute(col, 4).setUsage(THREE.DynamicDrawUsage)); geo.setIndex(TR_IDX); geo.setDrawRange(0, 0);
+    const m = new THREE.Mesh(geo, TR_M); m.frustumCulled = false; m.visible = false; m.renderOrder = 2; m.userData.fx = true;
+    return { m, geo, pos, col, p: new Float32Array(TR_N * 3), t: new Float32Array(TR_N), k: 0 }; }
+  const tA = new THREE.Vector3(), tB = new THREE.Vector3(), tC = new THREE.Vector3();
+  function trPush(R, x, y, z, T) { if (R.k === TR_N) { R.p.copyWithin(0, 3); R.t.copyWithin(0, 1); R.k--; } const j = R.k++; R.p[3 * j] = x; R.p[3 * j + 1] = y; R.p[3 * j + 2] = z; R.t[j] = T; }
+  function trDraw(R, T) { let d = 0; while (d < R.k && T - R.t[d] >= TR_LIFE) d++; if (d) { R.p.copyWithin(0, 3 * d, 3 * R.k); R.t.copyWithin(0, d, R.k); R.k -= d; }
+    if (R.k < 2) { R.m.visible = false; R.geo.setDrawRange(0, 0); return; }
+    const P = R.p, k = R.k; for (let i = 0; i < k; i++) { const i0 = Math.max(0, i - 1), i1 = Math.min(k - 1, i + 1);
+      tA.set(P[3 * i1] - P[3 * i0], P[3 * i1 + 1] - P[3 * i0 + 1], P[3 * i1 + 2] - P[3 * i0 + 2]); tB.set(P[3 * i], P[3 * i + 1], P[3 * i + 2]); tC.subVectors(camera.position, tB);
+      tA.cross(tC); const L = tA.length() || 1; const a = (T - R.t[i]) / TR_LIFE, w = (TR_W0 + TR_W1 * Math.sqrt(a)) * .5 / L;
+      const al = TR_A * (1 - a) * (1 - a) * Math.min(1, (k - 1 - i + .5) / 2.5) * Math.min(1, (i + 1) / 3);   // fondu dans le temps + bouts adoucis
+      R.pos[6 * i] = tB.x + tA.x * w; R.pos[6 * i + 1] = tB.y + tA.y * w; R.pos[6 * i + 2] = tB.z + tA.z * w; R.pos[6 * i + 3] = tB.x - tA.x * w; R.pos[6 * i + 4] = tB.y - tA.y * w; R.pos[6 * i + 5] = tB.z - tA.z * w;
+      R.col[8 * i + 3] = R.col[8 * i + 7] = al; }
+    R.geo.attributes.position.needsUpdate = R.geo.attributes.color.needsUpdate = true; R.geo.setDrawRange(0, (k - 1) * 6); R.m.visible = true; }
+  let TT = 0;
   GUNS.forEach(([n, lon, lat, en], i) => { const o = gunMesh(); ground(o, lon, lat); o.traverse(m => { if (m.isMesh) m.castShadow = true; }); g.add(o);
-    const G = { n, en, o, t: 1.2 + i * .55, fx: [] }; guns.push(G);
+    const G = { n, s: side(n, lon), en, o, t: 1.2 + i * .55, fx: [] }; guns.push(G);
     const fl = new THREE.Sprite(FLASH.clone()); fl.visible = false; g.add(fl); const sh = new THREE.Mesh(SHELL_G, SHELL_M); sh.visible = false; sh.castShadow = true; g.add(sh);
-    const pf = new THREE.Sprite(PUFF.clone()); pf.visible = false; g.add(pf); G.fl = fl; G.sh = sh; G.pf = pf; });
+    const pf = new THREE.Sprite(PUFF.clone()); pf.visible = false; g.add(pf); G.fl = fl; G.sh = sh; G.pf = pf; G.tr = trail(); g.add(G.tr.m); });
   MEN.forEach(([n, lon, lat]) => { const o = manMesh(n); ground(o, lon, lat); o.rotation.y = (n === 'fr' || (n === 'de' && lon > 12)) ? Math.PI / 2 : -Math.PI / 2;   // face à l'ennemi
-    o.traverse(m => { if (m.isMesh) m.castShadow = true; }); g.add(o); men[n].push({ n, o }); });
+    o.traverse(m => { if (m.isMesh) m.castShadow = true; }); g.add(o); men[n].push({ n, s: side(n, lon), o }); });
   /* modèles réels : canon de campagne (Lukas Bobor, CC BY 4.0) et soldat (Chernov-Egor, CC BY 4.0) – un seul modèle chacun, uniformes teintés par nation */
   const vv = new THREE.Vector3();
   const verts = (o, f) => { o.updateMatrixWorld(true); o.traverse(m => { if (!m.isMesh) return; const A = m.geometry.attributes.position; for (let i = 0; i < A.count; i += 2) f(vv.fromBufferAttribute(A, i).applyMatrix4(m.matrixWorld)); }); };
@@ -178946,20 +178969,21 @@ const WW = (() => {
   const aim = () => guns.forEach(G => { const T = target(G.en); G.T = T; const d = T.o.position.clone().sub(G.o.position); G.o.rotation.y = Math.atan2(-d.z, d.x); });
   aim();
   const v = new THREE.Vector3(); let on = false, last = 0;
-  function tick() { const now = performance.now() / 1000, dt = Math.min(.05, now - (last || now)); last = now;
+  function tick() { const now = performance.now() / 1000, dt = Math.min(.05, now - (last || now)); last = now; TT += dt;
     guns.forEach(G => { G.t -= dt; if (G.t <= 0 && !G.fly) { G.T = target(G.en); const d = G.T.o.position.clone().sub(G.o.position); G.o.rotation.y = Math.atan2(-d.z, d.x); G.o.updateMatrixWorld(true);
-        G.a = G.o.localToWorld(G.o.userData.muzzle.clone()); G.b = G.T.o.position.clone().add(V((Math.random() - .5) * .3, 0, (Math.random() - .5) * .3)); G.b.y = relief(G.b.x, G.b.z) + .004;
+        G.a = G.o.localToWorld(G.o.userData.muzzle.clone()); G.b = G.T.o.position.clone().add(V((Math.random() - .5) * .16, 0, (Math.random() - .5) * .16)); G.b.y = relief(G.b.x, G.b.z) + .004;
         G.len = G.a.distanceTo(G.b); G.dur = .9 + G.len * .35; G.fly = 0; G.fl.visible = true; G.fl.position.copy(G.a); G.ft = 0; G.sh.visible = true; G.t = 3.2 + Math.random() * 2.6; }
       if (G.ft !== undefined && G.ft < .22) { G.ft += dt; const k = G.ft / .22; G.fl.scale.setScalar(.16 + .2 * Math.sin(Math.PI * Math.min(1, k))); G.fl.material.opacity = 1 - k; if (k >= 1) G.fl.visible = false; }
       if (G.fly !== undefined && G.fly !== false && G.sh.visible) { G.fly += dt / G.dur; const u = Math.min(1, G.fly);
-        v.lerpVectors(G.a, G.b, u); v.y += Math.sin(Math.PI * u) * (.2 + G.len * .25); G.sh.position.copy(v);
+        v.lerpVectors(G.a, G.b, u); v.y += Math.sin(Math.PI * u) * (.2 + G.len * .25); G.sh.position.copy(v); trPush(G.tr, v.x, v.y, v.z, TT);
         if (u >= 1) { G.sh.visible = false; G.fly = false; G.pf.visible = true; G.pf.position.copy(G.b); G.pt = 0; } }
-      if (G.pt !== undefined && G.pt < 1.1) { G.pt += dt; const k = G.pt / 1.1; G.pf.scale.setScalar(.06 + .2 * Math.pow(k, .6)); G.pf.position.y = G.b.y + .04 + .08 * k; G.pf.material.opacity = .85 * (1 - k); if (k >= 1) G.pf.visible = false; } });
+      if (G.pt !== undefined && G.pt < 1.1) { G.pt += dt; const k = G.pt / 1.1; G.pf.scale.setScalar(.06 + .2 * Math.pow(k, .6)); G.pf.position.y = G.b.y + .04 + .08 * k; G.pf.material.opacity = .85 * (1 - k); if (k >= 1) G.pf.visible = false; }
+      if (G.tr.k) trDraw(G.tr, TT); });
     markDirty(); }
   function start() { if (on) return; on = true; last = 0; gsap.ticker.add(tick); }
-  function stop() { if (!on) return; on = false; gsap.ticker.remove(tick); guns.forEach(G => { G.fl.visible = G.sh.visible = G.pf.visible = false; G.fly = false; G.ft = G.pt = undefined; }); }
+  function stop() { if (!on) return; on = false; gsap.ticker.remove(tick); guns.forEach(G => { G.fl.visible = G.sh.visible = G.pf.visible = false; G.fly = false; G.ft = G.pt = undefined; G.tr.k = 0; G.tr.m.visible = false; G.tr.geo.setDrawRange(0, 0); }); }
   const P = addProp('WW1_Europa', ['ende'], g, (P, p) => { const e = THREE.MathUtils.clamp(p, 0, 1), k = 1 - Math.pow(1 - e, 3);
-    g.children.forEach(o => { if (!o.isSprite && o.geometry !== SHELL_G) o.scale.setScalar(Math.max(k, .001) * (o.userData.s || 1)); }); g.visible = e > .005; if (e > .98) start(); else stop(); });
+    g.children.forEach(o => { if (!o.isSprite && o.geometry !== SHELL_G && !o.userData.fx) o.scale.setScalar(Math.max(k, .001) * (o.userData.s || 1)); }); g.visible = e > .005; if (e > .98) start(); else stop(); });
   return { g, guns, men, start, stop, get on() { return on; }, P };
 })();
 function settleProps() {
@@ -180401,7 +180425,7 @@ function layoutReport() {
 }
 window.__deck = { goTo: n => goTo(n), _relief: (x, z) => relief(x, z), _isLand: (x, z) => isLand(x, z), _motion: () => { const B = PROPS.find(P => P.name === 'Bahn_DOA'), lo = B && B.g.children[0]; return { ships: Object.entries(SHIPS).map(([k, S]) => [k, +S.g.position.x.toFixed(4), +S.g.position.z.toFixed(4), +S.g.position.y.toFixed(4), +S.g.rotation.y.toFixed(4), S.g.visible ? 1 : 0, +(S.o * S.v).toFixed(3), +S.u.toFixed(4)]), loco: B ? [B.g.visible ? 1 : 0, +(B.uu || 0).toFixed(4), lo ? +lo.rotation.y.toFixed(4) : 0, lo ? +lo.position.x.toFixed(4) : 0, lo ? +lo.position.z.toFixed(4) : 0, lo ? +(lo.position.y - relief(lo.position.x, lo.position.z)).toFixed(4) : 0, lo && lo.visible ? 1 : 0] : null }; }, _rotProp: (n, r) => { const o = scene.getObjectByName(n); if (!o) return null; o.rotation.y = r; markDirty(); return true; }, _cam: () => camera.position.toArray(), _probe: (pts, R = .3) => { const rc = new THREE.Raycaster(), pl = new THREE.Plane(new THREE.Vector3(0, 1, 0), -.05), v = new THREE.Vector3(); return pts.map(([sx, sy]) => { rc.setFromCamera(new THREE.Vector2(sx / innerWidth * 2 - 1, 1 - sy / innerHeight * 2), camera); if (!rc.ray.intersectPlane(pl, v)) return null; const x = +v.x.toFixed(2), z = +v.z.toFixed(2), fr = footRelief(x, z, R, R); let terr = null; const r2 = new THREE.Raycaster(); r2.ray.direction.set(0, -1, 0); Object.entries(TERR).forEach(([id, m]) => { if (!m.isMesh) return; const vis = m.visible, sy0 = m.scale.y; m.visible = true; m.scale.y = 1; m.updateMatrixWorld(true); for (const [dx, dz] of [[0, 0], [R, 0], [-R, 0], [0, R], [0, -R]]) { r2.ray.origin.set(x + dx, 30, z + dz); if (r2.intersectObject(m, false).length) terr = id; } m.visible = vis; m.scale.y = sy0; m.updateMatrixWorld(true); }); return [sx, sy, x, z, isLand(x, z), terr, +(fr.max - fr.min).toFixed(3)]; }); }, _bookS: () => { const S = BOOK.split; if (!S) return null; const g = BOOK.tpl.geometry; g.computeBoundingBox(); const P = g.attributes.position, I = S.cover.index.array, ys = []; for (let t = 0; t < I.length; t++) ys.push(P.getY(I[t])); ys.sort((a, b) => a - b); const q = f => +ys[Math.floor(f * (ys.length - 1))].toFixed(4); return { T: S.T, ycb: S.ycb, hz: S.hz, hy: S.hy, pgx: S.pgx, pgz: S.pgz, bb: [g.boundingBox.min.toArray(), g.boundingBox.max.toArray()], coverY: [q(0), q(.01), q(.05), q(.1), q(.25), q(.5)] }; }, _figs: () => FIGS.map(f => [f.img, +(f.o || 0).toFixed(2), !!f.loaded, f.sprite.visible, f.sprite.position.toArray().map(v => +v.toFixed(2))]), _bookPose: (which, a) => { const b = which === 'fazit' ? trio.children[trio.children.length - 1] : parts[parts.length - 1] && parts[parts.length - 1].o; const B = b && b.userData.book; if (!B) return null; B.hinge.rotation.x = a; const F = [.22, .4, .56, .7, .84]; B.leaves.forEach((l, i) => { l.visible = a > .01; l.rotation.x = a * F[i]; }); (B.inside || []).forEach(m => m.visible = a > .01); markDirty(); return { real: !!B.real }; }, _gap: (nm, K = 12) => { const o = scene.getObjectByName(nm); if (!o) return null; o.updateMatrixWorld(true); const b = new THREE.Box3().setFromObject(o), S = new Array(K).fill(1e9), v = new THREE.Vector3();
     o.traverse(m => { if (!m.isMesh || !m.visible) return; const A = m.geometry.attributes.position; for (let i = 0; i < A.count; i += 3) { v.fromBufferAttribute(A, i).applyMatrix4(m.matrixWorld); const k = Math.min(K - 1, Math.floor((v.x - b.min.x) / (b.max.x - b.min.x) * K)); S[k] = Math.min(S[k], v.y - relief(v.x, v.z)); } });
-    return S.map(x => +(x * 100).toFixed(2)); }, _tex: () => FIGS.filter(f => f.loaded).map(f => { const im = f.sprite.material.map && f.sprite.material.map.image; return [f.img, im ? im.width + 'x' + im.height : null, (DIMS[f.img] || []).join('x')]; }).concat([...TEX.entries()].filter(([k, e]) => e.tex).map(([k, e]) => [k, (e.tex.image.naturalWidth || e.tex.image.width) + 'x' + (e.tex.image.naturalHeight || e.tex.image.height), (DIMS[k] || []).join('x')])), _ll: (lon, lat) => { const p = llW(lon, lat); return [+p.x.toFixed(3), +p.z.toFixed(3), +relief(p.x, p.z).toFixed(3)]; }, _proj: (x, y, z) => { const v = new THREE.Vector3(x, y, z).project(camera); return [Math.round((v.x + 1) / 2 * innerWidth), Math.round((1 - v.y) / 2 * innerHeight)]; }, _wwGround: () => WW.guns.map(G => G.o).concat(WW.men.fr.concat(WW.men.de, WW.men.ru).map(M => M.o)).map(o => { const b = new THREE.Box3().setFromObject(o, true), cx = (b.min.x + b.max.x) / 2, cz = (b.min.z + b.max.z) / 2, fr = footRelief(cx, cz, b.max.x - b.min.x, b.max.z - b.min.z); return [+((b.min.y - fr.max) * 100).toFixed(1), +((b.min.y - fr.min) * 100).toFixed(1)]; }), _ww: () => ({ on: WW.on, guns: WW.guns.map(G => [G.n, G.sh.visible, G.fl.visible, G.pf.visible]) }), _books: () => { const r = renderer.info.render; return [modelRoot.visible, +STOW.s.toFixed(2), r.calls]; }, _planeRects: () => PLANES.filter(p => p.slide === currentSlide).map(p => { p.group.updateMatrixWorld(true); const b = new THREE.Box3().setFromObject(p.photo); let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+    return S.map(x => +(x * 100).toFixed(2)); }, _tex: () => FIGS.filter(f => f.loaded).map(f => { const im = f.sprite.material.map && f.sprite.material.map.image; return [f.img, im ? im.width + 'x' + im.height : null, (DIMS[f.img] || []).join('x')]; }).concat([...TEX.entries()].filter(([k, e]) => e.tex).map(([k, e]) => [k, (e.tex.image.naturalWidth || e.tex.image.width) + 'x' + (e.tex.image.naturalHeight || e.tex.image.height), (DIMS[k] || []).join('x')])), _ll: (lon, lat) => { const p = llW(lon, lat); return [+p.x.toFixed(3), +p.z.toFixed(3), +relief(p.x, p.z).toFixed(3)]; }, _proj: (x, y, z) => { const v = new THREE.Vector3(x, y, z).project(camera); return [Math.round((v.x + 1) / 2 * innerWidth), Math.round((1 - v.y) / 2 * innerHeight)]; }, _wwGround: () => WW.guns.map(G => G.o).concat(WW.men.fr.concat(WW.men.de, WW.men.ru).map(M => M.o)).map(o => { const b = new THREE.Box3().setFromObject(o, true), cx = (b.min.x + b.max.x) / 2, cz = (b.min.z + b.max.z) / 2, fr = footRelief(cx, cz, b.max.x - b.min.x, b.max.z - b.min.z); return [+((b.min.y - fr.max) * 100).toFixed(1), +((b.min.y - fr.min) * 100).toFixed(1)]; }), _ww: () => ({ on: WW.on, guns: WW.guns.map(G => [G.n, G.sh.visible, G.fl.visible, G.pf.visible, G.s, G.T && G.T.s, G.tr.k]) }), _books: () => { const r = renderer.info.render; return [modelRoot.visible, +STOW.s.toFixed(2), r.calls]; }, _planeRects: () => PLANES.filter(p => p.slide === currentSlide).map(p => { p.group.updateMatrixWorld(true); const b = new THREE.Box3().setFromObject(p.photo); let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
     for (const x of [b.min.x, b.max.x]) for (const y of [b.min.y, b.max.y]) for (const z of [b.min.z, b.max.z]) { const v = new THREE.Vector3(x, y, z).project(camera), sx = (v.x + 1) / 2 * innerWidth, sy = (1 - v.y) / 2 * innerHeight; x0 = Math.min(x0, sx); x1 = Math.max(x1, sx); y0 = Math.min(y0, sy); y1 = Math.max(y1, sy); }
     return [p.spec.img, Math.round(x0), Math.round(y0), Math.round(x1), Math.round(y1), +p.o.toFixed(2)]; }), _obj: nm => { const o = scene.getObjectByName(nm); if (!o) return null; o.updateMatrixWorld(true); const b = new THREE.Box3().setFromObject(o), c = b.getCenter(new THREE.Vector3()), v = c.clone().project(camera); let vis = true; o.traverseAncestors(a => { if (!a.visible) vis = false; }); return { vis: vis && o.visible, n: o.children.length, min: b.min.toArray().map(x => +x.toFixed(3)), max: b.max.toArray().map(x => +x.toFixed(3)), scr: [Math.round((v.x + 1) / 2 * innerWidth), Math.round((1 - v.y) / 2 * innerHeight)] }; }, _ghosts: (prev = null) => { const S = SLIDES[currentSlide], P = prev == null ? null : SLIDES[prev], out = [], W0 = innerWidth, H0 = innerHeight;
     const own = id => id === S.id || (P && id === P.id);
