@@ -176740,7 +176740,7 @@ const SLIDES = [
       el('div', 'list vh', T.s2.chapters.map(ch => `<div class="row"><b>${H(ch[0])}</b><span>${H(ch[1])}</span></div>`).join(''), c);
     } },
   /* 3 · FOCUS VICTIMES – vue plongeante sur l'Afrique + données « Opfer » + carte SVG */
-  { id: 'opfer', tick: 1, head: 5, hideModel: true, pose: { pos: V(3.2, 15.5, 22.5), target: V(2.8, 0, 14.6) }, roll: -0.04, lift: 6,
+  { id: 'opfer', tick: 1, head: 5, hideModel: true, keepBooks: true,   /* p84 : pile gardée assemblée 2→3→4 (revue ensuite) */ pose: { pos: V(3.2, 15.5, 22.5), target: V(2.8, 0, 14.6) }, roll: -0.04, lift: 6,
     build(sec) {
       /* titre : en-tête existant du chapitre « Gewalt und Widerstand » (T.s6) – aucun titre « Opfer » propre dans les textes */
       column(sec, { kicker: T.s6.kicker, title: T.s6.title, date: T.s6.date }, [1, 6, 1, 5]);
