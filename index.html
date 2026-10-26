@@ -579,6 +579,15 @@ body *:not(.ttl):not(.fin):not(.hero h1){letter-spacing:0!important;}
 .ico{display:none!important;}
 .exp .num .ico{display:inline-block!important;}
 .cred .mcred{font-size:.92em;}
+/* p79 : cartels éditoriaux – coins doux (8 px, comme un cartel imprimé), marges symétriques, sans filets décoratifs */
+.glass,.glass.frost{border-radius:8px;border:0 !important;padding:1.4rem 1.6rem;box-shadow:0 .6rem 1.4rem -.8rem rgba(0,0,0,.55);}
+.glass:has(.exp){align-self:start;padding:1.5rem 1.7rem;}
+.exp{gap:1.3rem 1.5rem;align-items:start;}
+.exp>div{display:grid;grid-template-columns:2.2rem 1fr;column-gap:.75rem;align-items:start;padding-top:0;}
+.exp>div>.num{grid-row:1 / span 2;align-self:start;line-height:0;}
+.exp>div>b{margin:.2rem 0 .2rem;}
+.ackbig{align-self:end;border-radius:8px;background:rgba(24,20,16,.88);padding:1rem 1.4rem 1rem 1.4rem !important;font-size:1.35rem;}
+.ackbig .small{margin-top:.45rem;}
 </style>
 <!-- Bibliothèques intégrées (hors ligne) : three.js r169 + GLTFLoader + GSAP 3.12.5 (licences MIT / « no charge » GreenSock) -->
 <script>
@@ -175503,6 +175512,7 @@ function bookLabel(num) { const c = document.createElement('canvas'); c.width = 
     g.fillStyle = '#ff0000'; g.fillText(num, 256, base); [[24], [488]].forEach(([x]) => { g.fillRect(x - 5, 12, 3, 104); g.fillRect(x + 1, 12, 2, 104); }); };
   draw(); const t = new THREE.CanvasTexture(c); t.anisotropy = 8; t.userData.redraw = () => { draw(); t.needsUpdate = true; }; return t; }
 function bookMat(base, color, num) { const M = base.clone(), lab = bookLabel(num), [u0, u1, v0, v1] = BOOK_UV;
+  M.side = THREE.DoubleSide; M.transparent = false; M.depthWrite = true; M.alphaTest = 0;   /* p79 : plat vu de l'intérieur = face arrière du scan (pas de transparence) */
   M.envMap = ENV; M.envMapIntensity = .55; M.userData.lab = lab;
   M.onBeforeCompile = sh => { Object.assign(sh.uniforms, { uTint: { value: new THREE.Color(color) }, uGold: { value: new THREE.Color('#F0C766') }, uLab: { value: lab } });
     sh.fragmentShader = 'uniform vec3 uTint; uniform vec3 uGold; uniform sampler2D uLab;\n' + sh.fragmentShader
@@ -175541,11 +175551,11 @@ function bookReal(b) { const B = b.userData.book; if (!B || B.real || !BOOK.tpl)
   const S = BOOK.split || (BOOK.split = bookSplit(BOOK.tpl.geometry)), s = B.w / BOOK.tpl.L, mat = bookMat(BOOK.tpl.material, B.color, B.num);
   const sh = m => { m.castShadow = m.receiveShadow = true; return m; };
   const body = sh(new THREE.Mesh(S.body, mat)); body.scale.setScalar(s); body.position.y = -B.h / 2; body.name = 'scan'; B.inner.add(body);
-  const top = sh(new THREE.Mesh(S.pageTop, PAPER_MAT)); top.position.y = S.ycb - .0004; body.add(top);
+  const top = sh(new THREE.Mesh(S.pageTop, PAPER_MAT)); top.position.y = Math.min(S.ycb, S.yU) - .0012; body.add(top);   /* p79 : sous la face interne du plat à tout angle */
   const hinge = new THREE.Group(); hinge.position.set(0, -B.h / 2 + S.hy * s, S.hz * s); B.inner.add(hinge);
   const cover = sh(new THREE.Mesh(S.cover, mat)); cover.scale.setScalar(s); cover.position.set(0, -S.hy * s, -S.hz * s); cover.name = 'scan_cover'; hinge.add(cover);
   const und = sh(new THREE.Mesh(S.under, ENDP_MAT)); und.position.y = S.yU - .0005; cover.add(und);
-  top.visible = und.visible = false; B.inside = [top, und];   /* p70c : surfaces internes visibles seulement livre ouvert (le scan est usé/affaissé par endroits) */
+  top.visible = und.visible = false; und.parent.remove(und); B.inside = [top];   /* p79 : contre-garde retirée (traversait le plat usé) */   /* p70c : surfaces internes visibles seulement livre ouvert (le scan est usé/affaissé par endroits) */
   const lw = (S.pgx[1] - S.pgx[0]) * s * .97, ld = (S.hz - S.pgz) * s * .95, leaves = [];
   for (let i = 0; i < 5; i++) { const lp = new THREE.Group(); lp.position.set(0, -B.h / 2 + S.ycb * s + .002 + i * .0015, S.hz * s - .012);
     const m = new THREE.Mesh(new THREE.PlaneGeometry(lw, ld), LEAF_MAT); m.rotation.x = -Math.PI / 2; m.position.z = -ld / 2; m.castShadow = true; lp.add(m); lp.visible = false; B.inner.add(lp); leaves.push(lp); }
@@ -175593,7 +175603,7 @@ function deskObj(name, build, x, z, ry, out) { const g = new THREE.Group(); g.na
   deskReal('Telegraf', 'telegraph', { L: .95, ry: Math.PI / 2 }, -6.4, -.5, .5, [-1, -.2], [.5, .3, .95]);
   /* montre de gousset : « Vintage Pocket Watch » (Poly Haven, CC0) */
   /* p74 : casque colonial : « Wäinö Bremer's Pith Helmet » (Urheilumuseo, CC BY) – devant le casque à pointe */
-  deskReal('Tropenhelm', 'helmet', { L: .82, ry: .4, env: .45 }, -2.55, 1.95, -.3, [-1, .5], [.82, .5, .82]).fp = [.4, .4];
+  deskReal('Tropenhelm', 'helmet', { L: 1.15, ry: .4, env: .45 }, -2.5, 2.05, -.3, [-1, .5], [1.15, .7, 1.15]).fp = [.56, .56];
   deskReal('Taschenuhr', 'watch', { L: .56, rx: -Math.PI / 2 }, 1.41, 1.32, 2.6, [.3, 1], [.5, .08, .6]).fp = [.56, .56];
   /* globe terrestre : « Earth globe » (après 1744), Musées virtuels de Małopolska, scan CC0 (p65) – voir CREDITS / Bildnachweis */
   const GLOBE = deskObj('Globus', g => { const pr = new THREE.Mesh(new THREE.BoxGeometry(.62, 1.6, .62)); pr.position.y = .8; pr.visible = false; g.add(pr); g.userData.proxy = pr; g.scale.setScalar(1.45); }, -4.7, -1.7, .4, [-1, -.6]);
@@ -176105,13 +176115,13 @@ Object.entries(GOODS).forEach(([port, [ll, tw, kinds]]) => {
 /* p65 : cachet et sceau de cire (A9908244, CC BY) posés près de Versailles sur la diapositive « Ende » ; descendent en se posant */
 (() => { const g = new THREE.Group(), c = { x: -2.8, z: -1.6 }, s1 = new THREE.Group(); g.add(s1);
   const y0 = footRelief(c.x, c.z, .5, .4).max; g.position.set(c.x, y0, c.z); g.rotation.y = -.35;
-  realOnce('seal').then(sc => { s1.add(fitModel(sc, { L: .5, env: .6, y0: -.003 })); markDirty(); }).catch(e => console.info('[siegel]', e && e.message));
+  realOnce('seal').then(sc => { s1.add(fitModel(sc, { L: .72, env: .6, y0: -.003 })); markDirty(); }).catch(e => console.info('[siegel]', e && e.message));
   addProp('Siegel_1919', ['ende'], g, (P, p) => { const e = THREE.MathUtils.clamp(p, 0, 1), k = 1 - Math.pow(1 - e, 3);
     s1.position.y = .3 * (1 - k); s1.rotation.y = .8 * (1 - k); s1.visible = e > .01; });
 })();
 (() => { const g = new THREE.Group(), c = { x: THEO_AT[0], z: THEO_AT[1] }, inst = new THREE.Group(); g.add(inst);
   const y0 = footRelief(c.x, c.z, .2, .2).max; g.position.set(c.x, y0, c.z);
-  realOnce('theodolite').then(sc => { inst.add(fitModel(sc, { H: .45, rx: Math.PI / 2, env: .7 })); markDirty(); }).catch(e => console.info('[theodolit]', e && e.message));   /* p65 : ETH Zürich, Reise-Theodolit 1899 (scan, CC BY) */
+  realOnce('theodolite').then(sc => { inst.add(fitModel(sc, { H: .66, rx: Math.PI / 2, env: .7 })); markDirty(); }).catch(e => console.info('[theodolit]', e && e.message));   /* p65 : ETH Zürich, Reise-Theodolit 1899 (scan, CC BY) */
   addProp('Theodolit', ['verwaltung'], g, (P, p) => {
     const e1 = THREE.MathUtils.smoothstep(p, 0, .5), e3 = THREE.MathUtils.smoothstep(p, .4, 1);
     inst.scale.setScalar(Math.max(e1, .001)); inst.rotation.y = -1.6 * (1 - e3) + .5; inst.visible = p > .005; });
@@ -176134,7 +176144,7 @@ Object.entries(GOODS).forEach(([port, [ll, tw, kinds]]) => {
   const body = new THREE.Group(); g.add(body);
   const m = (par, geo, mat, x = 0, y = 0, z = 0) => { const o = new THREE.Mesh(geo, mat); o.position.set(x, y, z); o.castShadow = o.receiveShadow = true; par.add(o); return o; };
   const arm = new THREE.Group(); body.add(arm);
-  realOnce('sextant').then(sc => { body.add(fitModel(sc, { L: .38, env: .9 })); markDirty(); }).catch(e => console.info('[sextant]', e && e.message));   /* p65 : « Pocket sextant », Musées virtuels de Małopolska (scan, CC0) */
+  realOnce('sextant').then(sc => { body.add(fitModel(sc, { L: .55, env: .9 })); markDirty(); }).catch(e => console.info('[sextant]', e && e.message));   /* p65 : « Pocket sextant », Musées virtuels de Małopolska (scan, CC0) */
   const G = groundAt(c.x, c.z, .3, .3); g.position.set(c.x, G.y + .001, c.z); g.rotation.y = SEXT_AT[2];
   addProp('Sextant', ['neuguinea'], g, (P, p) => { const e = THREE.MathUtils.smoothstep(p, 0, .7), k = THREE.MathUtils.smoothstep(p, .5, 1);
     body.position.set(0, 0, -(1 - e) * .8); body.rotation.y = (1 - e) * .5; arm.rotation.y = -.42 + .3 * k; g.visible = p > .005; });
@@ -176143,13 +176153,13 @@ Object.entries(GOODS).forEach(([port, [ll, tw, kinds]]) => {
    Entrée : descente + léger pivot puis pose (ease out) ; sortie : remontée inverse (p → 0). */
 const REAL_PROPS = [
   /* Baumwollballen : « Small Bale of Cotton » (IU Indianapolis University Library) – faces drapeau/lettrage tournées vers le sol / l'arrière */
-  { name: 'Baumwollballen', file: 'bale', slides: ['verwaltung'], at: [-.2, 7.35], ry: .66, fit: { L: .62, rx: Math.PI, env: .35 }, fp: [.31, .2] },
+  { name: 'Baumwollballen', file: 'bale', slides: ['verwaltung'], at: [-.4, 7.4], ry: .66, fit: { L: 1.05, rx: Math.PI, env: .35 }, fp: [.53, .34] },
   /* Jutesack : « Burlap Drawstring Sack » (kestonevideo) */
-  { name: 'Jutesack', file: 'sack', slides: ['verwaltung'], at: [.42, 7.0], ry: .3, fit: { H: .42, env: .3 }, fp: [.21, .19] },
+  { name: 'Jutesack', file: 'sack', slides: ['verwaltung'], at: [.62, 6.85], ry: .3, fit: { H: .7, env: .3 }, fp: [.35, .32] },
   /* Schreibmaschine : « Underwood No. 5 » (uliana) – Verwaltung */
-  { name: 'Schreibmaschine', file: 'typewriter', slides: ['verwaltung'], at: [-2.35, 6.95], ry: .66, fit: { L: .66, env: .55 }, fp: [.33, .26] },
+  { name: 'Schreibmaschine', file: 'typewriter', slides: ['verwaltung'], at: [-2.45, 6.95], ry: .66, fit: { L: 1.12, env: .55 }, fp: [.56, .44] },
   /* Gewehr : « Beaumont M1871 rifle » (Centre Céramique Maastricht) – à plat, Kolonialkriege */
-  { name: 'Gewehr_M1871', file: 'rifle', slides: ['gewalt'], at: [2.2, 14.4], ry: 0, fit: { L: 2.0, env: .8 }, fp: [1.0, .14] }
+  { name: 'Gewehr_M1871', file: 'rifle', slides: ['gewalt'], at: [1.2, 14.85], ry: 0, fit: { L: 2.5, env: .8 }, fp: [1.25, .18] }
 ];
 REAL_PROPS.forEach(R => { const g = new THREE.Group(), inst = new THREE.Group(); g.add(inst);
   /* p77 : assise sur le plan ajusté au relief (normale sur l'empreinte orientée), relevé du plus grand résidu → ni enfoncé ni flottant au-delà du relief local */
@@ -176791,7 +176801,7 @@ const SLIDES = [
     planes: [
       { img: 'spiegelsaal.webp', area: [7, 11, 1, 7], d: 5.4, cap: 's7.capSaal' },
       { img: 'treaty.webp', area: [11, 13, 1, 7], d: 5.2 },
-      { img: 'soldat.webp', area: [1, 3, 9, 13], d: 4.4, cut: true },
+      { img: 'soldat.webp', area: [7, 9, 9, 13], d: 4.4, cut: true },   /* p79 : sorti de la zone assombrie (scrim) à gauche */
       { img: 'lettow.webp', area: [3, 6, 9, 13], d: 4.6, cut: true, cap: 's7.capLettow' }
     ],
     build(sec) {
@@ -176815,10 +176825,10 @@ const SLIDES = [
       column(sec, { kicker: T.s6.kicker, title: O.kicker }, [1, 8, 1, 4]).classList.add('tight');
       put(el('div', 'bare rv', `<div class="vict">${O.rows.map(r => `<div class="row"><b>${ICON('people')}${H(r[0])}</b><div><strong>${H(r[1])}</strong><span>${H(r[2])}</span></div></div>`).join('')}</div>
         <div class="gsub">${ICON('people')}${H(O.pop.title)}</div>${bars(O.pop.rows.map(r => [r[0], r[2], r[3]]), 80000, '6rem')}`, sec._g), [9, 13, 1, 11]);
-      put(el('div', 'ackbig rv', `${H(O.ack)}<div class="small">${H(O.src)}</div>`, sec._g), [1, 13, 11, 13]);
+      put(el('div', 'ackbig rv', `${H(O.ack)}<div class="small">${H(O.src)}</div>`, sec._g), [1, 9, 11, 13]);   /* p79 : légende alignée sur le graphique */
     } },
   /* WER BEKAM DIE KOLONIEN? – cartes de la répartition des mandats (chaque territoire coloré selon sa nouvelle puissance) */
-  { id: 'mandate', tick: 6, head: 6, hideModel: true, noScraps: true, pose: { pos: V(3, 17, 19), target: V(4, 0, 10) },
+  { id: 'mandate', tick: 6, head: 6, hideModel: true, pose: { pos: V(3, 17, 19), target: V(4, 0, 10) },
     build(sec) {
       const M = X.mandate, PC = [PAL.fill, '#8FA3B0', '#7E9A6A', PAL.light, '#D8CDB4', '#A07AA0'];
       const COLS = { togo: 0, kamerun: 0, doa: 1, dswa: 2, neuguinea: 3, kiautschou: 5 };
@@ -176830,7 +176840,7 @@ const SLIDES = [
       put(el('div', 'bare rv mmap', `<div class="gk">${ICON('pin')}${H(F.bilanz.labels.kiautschou)}</div>${tint(locSVG('china', ['kiautschou'], 'map'))}`, sec._g), [10, 13, 7, 13]);
     } },
   /* KAPITEL VI – FAZIT : trois livres (I–III) qui tombent en place, textes projetés à côté ; grande phrase de conclusion */
-  { id: 'fazit', tick: 7, head: 7, hideModel: true, trio: true, noScraps: true, via: 5, frame: { c: [0, 1.6, 0], az: -10, el: 14, dist: 12.5, at: cc([5, 9, 2, 12]) },
+  { id: 'fazit', tick: 7, head: 7, hideModel: true, trio: true, via: 5, frame: { c: [0, 1.6, 0], az: -10, el: 14, dist: 12.5, at: cc([5, 9, 2, 12]) },
     build(sec) {
       column(sec, T.s8, [1, 5, 1, 12]).classList.add('statement');
     } },
