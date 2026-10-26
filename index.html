@@ -5058,6 +5058,8 @@ window.INFOCARDS = [
 
 
 
+
+
 <!-- ======================= APPLICATION ======================= -->
 <script type="module">
 /* hors ligne : bibliothèques intégrées plus haut (window.THREE / window.GLTFLoader / window.gsap) */
@@ -5601,7 +5603,7 @@ scene.add(shadowCatcher);
   const n = 260, p = new Float32Array(n * 3);
   for (let i = 0; i < n; i++) { p[i * 3] = (Math.random() - .5) * 160; p[i * 3 + 1] = Math.random() * 90 - 6; p[i * 3 + 2] = 40 + Math.random() * 640; }
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(p, 3));
-  scene.add(new THREE.Points(g, new THREE.PointsMaterial({ color: 0xcfc2aa, size: 0.07, sizeAttenuation: true, transparent: true, opacity: .22, depthWrite: false })));
+  /* p107 : supprimée – 260 points clairs dispersés dans toute la scène, visibles sur toutes les diapositives comme des « flocons » */
 }
 
 /* Fragments d'archives : morceaux déchirés des VRAIES cartes et photos du dossier, réunis dans UN atlas
@@ -6024,7 +6026,11 @@ const MODEL_CREDITS = ['„ETH: Travel theodolite, 1899 / Reise-Theodolit“ von
   '„Underwood No. 5 Typewriter | Vintage 3D Prop“ von uliana, sketchfab.com/3d-models/5be8df9e51e6412f9386da1d83ae2e8a',
   '„Wäinö Bremer’s Pith Helmet“ von urheilumuseo, sketchfab.com/3d-models/17690249a50447f5a93997ada3494f45',
   '„WW1 Artillery“ von Lukas Bobor, sketchfab.com/3d-models/4ee955fda8db4a2ea9e6a5fe7beded21',
-  '„Rus soldier“ von Chernov-Egor, sketchfab.com/3d-models/141a9aabccff45a7b4caf5031effa3ac (Uniform je Nation umgefärbt)'].map(t => t + ', CC BY 4.0 (optimiert)');
+  '„Rus soldier“ von Chernov-Egor, sketchfab.com/3d-models/141a9aabccff45a7b4caf5031effa3ac (Uniform je Nation umgefärbt)',
+  '„Haussmannien building 3“ von pacpak, sketchfab.com/3d-models/9c028403d5894752bffba7b25b1b2266',
+  '„Building Scheibenstrasse“ von grs (sgrosjean), sketchfab.com/3d-models/82e33f5433274194b1633ff2f632047c',
+  '„Fokker Dr.I – Rise of Flights“ von KojfDiscord, sketchfab.com/3d-models/700ec52cb0744508b0774219979ca2bc',
+  '„Nieuport 17.C1 – Rise of Flights“ von KojfDiscord, sketchfab.com/3d-models/39b85024cb00479ca0a41c89064e4206'].map(t => t + ', CC BY 4.0 (optimiert)');
 const DESK_OBJ = [];
 function deskReal(name, file, fit, x, z, ry, out, proxy) {
   const o = deskObj(name, g => { const pr = new THREE.Mesh(new THREE.BoxGeometry(...proxy)); pr.position.y = proxy[1] / 2; pr.visible = false; g.add(pr); g.userData.proxy = pr; }, x, z, ry, out);
@@ -6640,7 +6646,7 @@ REAL_PROPS.forEach(R => { const g = new THREE.Group(), inst = new THREE.Group();
     inst.position.y = .35 * (1 - k); inst.rotation.y = .5 * (1 - k); inst.scale.setScalar(Math.max(.6 + .4 * k, .001)); inst.visible = e > .01; g.visible = e > .005; }); PP.c = g.position.clone(); });
 /* ============ p85 : 1914–1918 – petite scène animée en Europe (diapo « ende ») : canons + soldats par nation, obus en cloche ============ */
 const WW_S = 4.62;   // p87 : 4.2 × 1.1 ; échelle des figurines (lisibles à la distance de la diapo)
-const WW_DT = { v: .05 };   // pas max. de la simulation (crochet de test : accélérer en rendu logiciel)
+const WW_DT = { v: .05 }; let WW_PLDBG = () => 0;   // pas max. de la simulation (crochet de test : accélérer en rendu logiciel)
 const WW = (() => {
   const NAT = {
     fr: { col: 0x6F8FAF, dark: 0x4E6A86, helm: 'adrian' },
@@ -6704,7 +6710,7 @@ const WW = (() => {
     if (R.k < 2) { R.m.visible = false; R.geo.setDrawRange(0, 0); return; }
     const P = R.p, k = R.k; for (let i = 0; i < k; i++) { const i0 = Math.max(0, i - 1), i1 = Math.min(k - 1, i + 1);
       tA.set(P[3 * i1] - P[3 * i0], P[3 * i1 + 1] - P[3 * i0 + 1], P[3 * i1 + 2] - P[3 * i0 + 2]); tB.set(P[3 * i], P[3 * i + 1], P[3 * i + 2]); tC.subVectors(camera.position, tB);
-      tA.cross(tC); const L = tA.length() || 1; const a = (T - R.t[i]) / TR_LIFE, w = (TR_W0 + TR_W1 * Math.sqrt(a)) * .5 / L;
+      tA.cross(tC); const L = tA.length() || 1; const a = (T - R.t[i]) / TR_LIFE, w = (TR_W0 + TR_W1 * Math.sqrt(Math.max(0, a))) * .5 / L;
       const al = TR_A * (1 - a) * (1 - a) * Math.min(1, (k - 1 - i + .5) / 2.5) * Math.min(1, (i + 1) / 3);   // fondu dans le temps + bouts adoucis
       R.pos[6 * i] = tB.x + tA.x * w; R.pos[6 * i + 1] = tB.y + tA.y * w; R.pos[6 * i + 2] = tB.z + tA.z * w; R.pos[6 * i + 3] = tB.x - tA.x * w; R.pos[6 * i + 4] = tB.y - tA.y * w; R.pos[6 * i + 5] = tB.z - tA.z * w;
       R.col[8 * i + 3] = R.col[8 * i + 7] = al; }
@@ -6833,9 +6839,95 @@ const WW = (() => {
         sp.scale.setScalar(.12 + .38 * u); sp.material.opacity = .7 * fi * Math.sin(Math.PI * u); });
       const c = 1 - .5 * Math.min(1, t / 3); B.mats.forEach(([M, C0]) => M.color.copy(C0).multiplyScalar(c)); }); }
   function bldReset() { BT = 0; BLD.forEach(B => { B.shot = false; B.burn = undefined; B.fl.concat(B.sm, B.em, [B.gl]).forEach(sp => sp.visible = false); B.mats.forEach(([M, C0]) => M.color.copy(C0)); }); guns.forEach(G => G.force = null); }
+  /* p106 : avions 1914–1918 – pistes en herbe derrière ses propres lignes, roulage + décollage, orbites au-dessus des lignes ENNEMIES, petites bombes.
+     Modèles : Nieuport 17.C1 (FR) et Fokker Dr.I (DE) de KojfDiscord (CC BY 4.0). Tout est pré-alloué (pas d'allocation par image). */
+  const PL_K = .042, PL_G = 1.6;                       // échelle (unités monde / m d'envergure réelle) ; gravité des bombes
+  const lineOf = sd => { const [a, b, c, d] = TRENCH[sd], p = llW(a, b), q = llW(c, d); return { x: p.x, z: p.z, dx: q.x - p.x, dz: q.z - p.z, L: Math.hypot(q.x - p.x, q.z - p.z) }; };
+  const sideDist = (Ln, x, z) => (Ln.dx * (z - Ln.z) - Ln.dz * (x - Ln.x)) / Ln.L;
+  /* zone ennemie = côté de la tranchée ennemie opposé à la nation qui largue (repère : un point bien à l'intérieur du pays ennemi) */
+  const ENEMY = { fr: { ln: lineOf('dw'), ref: llW(11, 50.5) }, dw: { ln: lineOf('fr'), ref: llW(1.5, 48.5) }, de: { ln: lineOf('ru'), ref: llW(28, 53) } };
+  Object.values(ENEMY).forEach(E => { E.sg = Math.sign(sideDist(E.ln, E.ref.x, E.ref.z)); });
+  const enemyOK = (sd, x, z) => { const E = ENEMY[sd]; return sideDist(E.ln, x, z) * E.sg > .12; };
+  /* pistes : [côté, modèle, lon0, lat0 (début), lon1, lat1 (fin, vers l'ennemi), nb d'avions, centre d'orbite (lon, lat)] */
+  const STRIPS = [['fr', 'nieuport', 0.4, 50.1, 3.0, 50.3, 1, [7.9, 50.0]], ['fr', 'nieuport', 1.0, 47.7, 3.1, 47.95, 1, [7.6, 48.5]], ['dw', 'fokker', 11.2, 50.95, 8.7, 50.6, 1, [3.0, 49.6]], ['de', 'fokker', 13.6, 50.5, 16.1, 50.72, 1, [26.0, 52.6]]];   /* p107 : 2 avions par camp (FR : 2 Nieuport ; DE : 1 Fokker à l'ouest, 1 à l'est) */
+  const PLANES = [], stripM = (() => { const c = document.createElement('canvas'); c.width = 256; c.height = 64; const x = c.getContext('2d');
+    x.fillStyle = '#5B5E45'; x.fillRect(0, 0, 256, 64); for (let i = 0; i < 900; i++) { x.fillStyle = `rgba(${70 + Math.random() * 30 | 0},${74 + Math.random() * 30 | 0},${50 + Math.random() * 20 | 0},.45)`; x.fillRect(Math.random() * 256, Math.random() * 64, 3, 2); }
+    x.fillStyle = 'rgba(120,112,88,.3)'; x.fillRect(0, 27, 256, 10);   // trace de roulage plus claire
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
+    const a = document.createElement('canvas'); a.width = 64; a.height = 64; const y = a.getContext('2d'), gr = y.createLinearGradient(0, 0, 0, 64); gr.addColorStop(0, '#000'); gr.addColorStop(.2, '#fff'); gr.addColorStop(.8, '#fff'); gr.addColorStop(1, '#000'); y.fillStyle = gr; y.fillRect(0, 0, 64, 64);
+    const gx = y.createLinearGradient(0, 0, 64, 0); gx.addColorStop(0, '#000'); gx.addColorStop(.08, 'rgba(0,0,0,0)'); gx.addColorStop(.92, 'rgba(0,0,0,0)'); gx.addColorStop(1, '#000'); y.globalCompositeOperation = 'source-over'; y.fillStyle = gx; y.fillRect(0, 0, 64, 64);
+    return new THREE.MeshStandardMaterial({ map: t, alphaMap: new THREE.CanvasTexture(a), transparent: true, opacity: .85, depthWrite: false, roughness: 1, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }); })();
+  const BOMB_G = new THREE.CylinderGeometry(.006, .004, .03, 7), BOMB_M = std(0x22211F, .55, .4), bQ = new THREE.Quaternion(), bU = new THREE.Vector3(0, 1, 0), bV = new THREE.Vector3();
+  STRIPS.forEach(([sd, mdl, lo0, la0, lo1, la1, n, oc], si) => { const a = llW(lo0, la0), b = llW(lo1, la1), dx = b.x - a.x, dz = b.z - a.z, L = Math.hypot(dx, dz), ux = dx / L, uz = dz / L;
+    let y0 = -1e9; for (let k = 0; k <= 12; k++) for (const o of [-.06, 0, .06]) y0 = Math.max(y0, relief(a.x + dx * k / 12 - uz * o, a.z + dz * k / 12 + ux * o)); y0 += .003;
+    const st = new THREE.Mesh(new THREE.PlaneGeometry(L * 1.08, .13), stripM); st.rotation.set(-Math.PI / 2, 0, Math.atan2(-dz, dx), 'YXZ'); st.rotation.order = 'YXZ'; st.rotation.y = Math.atan2(-dz, dx); st.rotation.x = -Math.PI / 2; st.rotation.z = 0;
+    st.position.set((a.x + b.x) / 2, y0, (a.z + b.z) / 2); st.receiveShadow = true; st.userData.s = 1; st.name = 'WW1_strip_' + sd; g.add(st);
+    const C = llW(oc[0], oc[1]), yC = relief(C.x, C.z);
+    for (let i = 0; i < n; i++) { const o = new THREE.Group(); o.rotation.order = 'YXZ'; o.userData.s = 1; o.visible = false; g.add(o);
+      const bomb = new THREE.Mesh(BOMB_G, BOMB_M); bomb.visible = false; bomb.castShadow = true; bomb.userData.fx = true; g.add(bomb);
+      const E = { ifl: new THREE.Sprite(HOT.clone()), igl: new THREE.Sprite(GLOW.clone()), sm: new THREE.Sprite(SMOKE.clone()), db: new THREE.InstancedMesh(DEB_G, DEB_M, DEB_N), dv: new Float32Array(DEB_N * 6), b: new THREE.Vector3(), it: undefined };
+      [E.ifl, E.igl, E.sm].forEach(s => { s.visible = false; g.add(s); }); E.db.visible = false; E.db.frustumCulled = false; E.db.castShadow = true; E.db.userData.fx = true; for (let j = 0; j < DEB_N; j++) E.db.setMatrixAt(j, d0); g.add(E.db);
+      const R = .3, s0 = .08;
+      PLANES.push({ sd, mdl, o, bomb, E, i, ax: a.x, az: a.z, ux, uz, y0, L, s0, cx: C.x + (i - (n - 1) / 2) * .16 * uz, cz: C.z - (i - (n - 1) / 2) * .16 * ux, R, alt: yC + .42 + .07 * i, cw: (si + i) % 2 ? 1 : -1,
+        delay: .4 + si * .7 + Math.random() * .5, v: .35 + .015 * si, yC, tx: b.x, tz: b.z, ok: false }); } });
+  ['nieuport', 'fokker'].forEach(mdl => realOnce('pl_' + mdl).then(sc => { const span = mdl === 'fokker' ? 7.19 : 8.17, w = fitModel(sc, { L: span * PL_K, env: .55 });
+    const bad = []; w.traverse(m => { if (m.isMesh && (m.geometry.attributes.position.count <= 3 || m.geometry.attributes.position.array.some(Number.isNaN))) bad.push(m); }); bad.forEach(m => m.parent.remove(m));
+    w.traverse(m => { if (!m.isMesh) return; m.castShadow = true; m.receiveShadow = false; [].concat(m.material).forEach(M => { M.transparent = false; M.alphaTest = .5; M.depthWrite = true; M.needsUpdate = true; }); });
+    PLANES.filter(P => P.mdl === mdl).forEach(P => { P.o.add(P === PLANES.find(Q => Q.mdl === mdl) ? w : w.clone()); P.ok = true; plReset1(P); }); markDirty(); }).catch(e => console.info('[ww1] avion', mdl, e && e.message)));
+  function plReset1(P) { P.ph = 0; P.t = 0; P.s = P.s0; P.sp = 0; P.x = P.ax + P.ux * P.s; P.z = P.az + P.uz * P.s; P.y = P.y0; P.hd = Math.atan2(P.ux, P.uz); P.vy = 0; P.bank = 0; P.pitch = 0; P.bt = 2.5 + Math.random() * 2.5; P.bf = false; P.wt = P.delay; P.tr = 0; P.vt = P.v;
+    P.o.position.set(P.x, P.y, P.z); P.o.rotation.set(0, P.hd, 0); P.o.visible = P.ok; P.bomb.visible = false; const E = P.E; E.it = undefined; E.ifl.visible = E.igl.visible = E.sm.visible = E.db.visible = false; }
+  function boom(E, x, y, z) { E.b.set(x, y, z); E.it = 0; E.ifl.visible = true; E.ifl.position.set(x, y + .015, z); E.sm.visible = true; E.sm.position.copy(E.b); E.db.visible = true;
+    for (let j = 0; j < DEB_N; j++) { const a = Math.random() * Math.PI * 2, r = .2 + Math.random() * .35; E.dv[6 * j] = Math.cos(a) * r; E.dv[6 * j + 1] = .6 + Math.random() * .5; E.dv[6 * j + 2] = Math.sin(a) * r; E.dv[6 * j + 3] = Math.random() * 6; E.dv[6 * j + 4] = Math.random() * 6; E.dv[6 * j + 5] = .6 + Math.random() * .8; } }
+  function boomTick(E, dt) { if (E.it === undefined || E.it >= 1.5) return; E.it += dt; const t = E.it, B = E.b;   /* mêmes paramètres que l'impact d'obus (p100/p104) */
+    if (E.ifl.visible) { const k = t / .5; E.ifl.scale.setScalar(.2 + .55 * Math.pow(Math.min(1, k), .45)); E.ifl.position.y = B.y + .04 + .1 * k; E.ifl.material.opacity = Math.max(0, 1 - k * k); E.igl.visible = true; E.igl.position.set(B.x, B.y + .03, B.z); E.igl.scale.setScalar(.9 * (1 - .4 * k)); E.igl.material.opacity = Math.max(0, 1 - k); if (k >= 1) E.ifl.visible = E.igl.visible = false; }
+    { const k = Math.min(1, t / 1.45); E.sm.scale.setScalar(.12 + .42 * Math.pow(k, .55)); E.sm.position.y = B.y + .05 + .3 * Math.pow(k, .8); E.sm.material.opacity = .8 * Math.min(1, Math.max(0, (t - .18) / .25)) * Math.pow(1 - k, 1.4); if (k >= 1) E.sm.visible = false; }
+    if (E.db.visible) { const tt = Math.min(t, .95), gy = 1.6; let any = false;
+      for (let j = 0; j < DEB_N; j++) { const o = 6 * j, y = B.y + .006 + E.dv[o + 1] * tt - .5 * gy * tt * tt; const done = y < B.y - .004 && tt > .1, sc = done ? 0 : E.dv[o + 5] * Math.min(1, (1 - tt / .95) * 5);
+        if (sc > 0) any = true; E.db.setMatrixAt(j, dM4.compose(dT.set(B.x + E.dv[o] * tt, Math.max(y, B.y - .004), B.z + E.dv[o + 2] * tt), dQ.setFromEuler(dE.set(E.dv[o + 3] * tt * 3, E.dv[o + 4] * tt * 3, 0)), dS.setScalar(sc))); }
+      E.db.instanceMatrix.needsUpdate = true; if (!any || t >= .95) E.db.visible = false; } }
+  const wrap = a => a - Math.PI * 2 * Math.floor((a + Math.PI) / (Math.PI * 2));
+  /* p107 : plan de vol varié – sortie = suite de points tirés au hasard au-dessus des lignes ennemies (rayon de virage, altitude et vitesse variables),
+     puis retour, approche dans l'axe (depuis le côté du front), arrondi, toucher, roulage jusqu'à l'arrêt, pause, nouveau décollage (sens inverse). */
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  function pickWP(P) { const E = ENEMY[P.sd], Ln = E.ln, t = P.sd === 'de' ? rnd(.35, .9) : rnd(.12, .88), off = rnd(.1, .55) * E.sg;
+    P.wx = Ln.x + Ln.dx * t - Ln.dz / Ln.L * off; P.wz = Ln.z + Ln.dz * t + Ln.dx / Ln.L * off; P.wy = P.yC + rnd(.3, .58); P.tmax = rnd(.55, 1.5); P.vt = rnd(.32, .42); }
+  function steer(P, tx, tz, tmax, dt) { const want = Math.atan2(tx - P.x, tz - P.z), turn = THREE.MathUtils.clamp(wrap(want - P.hd) * 1.8, -tmax, tmax);
+    P.tr += (turn - P.tr) * Math.min(1, dt * 2.2); P.hd = wrap(P.hd + P.tr * dt); }
+  function fly(P, dt, yT, vmax) { P.sp += (P.vt - P.sp) * Math.min(1, dt * .8); P.x += Math.sin(P.hd) * P.sp * dt; P.z += Math.cos(P.hd) * P.sp * dt;
+    const vyT = THREE.MathUtils.clamp((yT - P.y) * .9, -vmax, .14); P.vy += (vyT - P.vy) * Math.min(1, dt * 1.5); P.y += P.vy * dt;
+    P.pitch += (Math.atan2(P.vy, P.sp) - P.pitch) * Math.min(1, dt * 3); P.bank += (-P.tr * .45 - P.bank) * Math.min(1, dt * 2.5); }
+  function planeTick(dt) { PLANES.forEach(P => { if (!P.ok) return; P.t += dt; boomTick(P.E, dt);
+    if (P.ph === 0) { P.wt -= dt; if (P.wt <= 0) { P.ph = 1; P.sp = 0; } }                                   // garé (pause)
+    else if (P.ph === 1) { P.sp = Math.min(P.v, P.sp + .42 * dt); P.x += Math.sin(P.hd) * P.sp * dt; P.z += Math.cos(P.hd) * P.sp * dt;   // roulage au décollage
+      const lift = Math.max(0, P.sp - P.v * .72) / (P.v * .28); P.vy = .2 * lift * lift; P.y += P.vy * dt; P.pitch += ((.05 + .22 * lift) - P.pitch) * Math.min(1, dt * 4);
+      if (P.y > P.y0 + .06) { P.ph = 2; P.vt = P.v; P.tr = 0; P.st = rnd(13, 22); P.nw = 0; pickWP(P); } }
+    else if (P.ph === 2) { P.st -= dt; steer(P, P.wx, P.wz, P.tmax, dt); fly(P, dt, P.wy, .1);                 // sortie
+      if (Math.hypot(P.wx - P.x, P.wz - P.z) < .18) { P.nw++; pickWP(P); }
+      if (P.st <= 0 && !P.bf) { P.ph = 3; P.vt = .34; }
+      if (!P.bf && (P.bt -= dt) <= 0) { const vx = Math.sin(P.hd) * P.sp, vz = Math.cos(P.hd) * P.sp, h0 = P.y - .02, tf0 = Math.sqrt(2 * Math.max(.05, h0 - relief(P.x, P.z)) / PL_G), ix = P.x + vx * tf0, iz = P.z + vz * tf0;
+        if (enemyOK(P.sd, ix, iz)) { const iy = relief(ix, iz) + .004, tf = Math.sqrt(2 * Math.max(.05, h0 - iy) / PL_G);
+          P.bf = true; P.bx = P.x; P.by = h0; P.bz = P.z; P.bvx = vx; P.bvz = vz; P.bT = 0; P.bTf = tf; P.biy = iy; P.ix = P.x + vx * tf; P.iz = P.z + vz * tf; P.bomb.visible = true; } else P.bt = .25; } }
+    else if (P.ph === 3) { const fx = P.tx + P.ux * .95, fz = P.tz + P.uz * .95; steer(P, fx, fz, 1.1, dt); fly(P, dt, P.y0 + .22, .1);   // retour vers le point d'approche (rayon d'arrivée > rayon de virage)
+      if (Math.hypot(fx - P.x, fz - P.z) < .36) { P.ph = 4; P.vt = .28; } }
+    else if (P.ph === 4) { const rx = P.x - P.tx, rz = P.z - P.tz, a = -(rx * P.ux + rz * P.uz), c = rx * P.uz - rz * P.ux;   // finale : a = distance passée le seuil, c = écart latéral
+      steer(P, P.tx - P.ux * (a + .38), P.tz - P.uz * (a + .38), 1.2, dt);
+      const yT = P.y0 + .22 * THREE.MathUtils.clamp(-(a + .06) / .89, 0, 1), h = P.y - P.y0;
+      fly(P, dt, h < .03 ? P.y0 - .1 : yT, h < .03 ? .055 : .16); if (h < .035) P.pitch += (.07 - P.pitch) * Math.min(1, dt * 3);   // arrondi
+      if (P.y <= P.y0) { P.y = P.y0; P.vy = 0; P.ph = 5; }
+      else if (a > .34 || (a > -.2 && Math.abs(c) > .09)) { P.ph = 3; P.vt = .36; P.dbg = [+a.toFixed(2), +c.toFixed(2), +h.toFixed(3), +P.sp.toFixed(2)]; } }   // remise des gaz
+    else if (P.ph === 5) { P.sp = Math.max(0, P.sp - .3 * dt); P.x += Math.sin(P.hd) * P.sp * dt; P.z += Math.cos(P.hd) * P.sp * dt; P.y = P.y0;   // roulage à l'atterrissage
+      P.tr = 0; P.hd = wrap(P.hd + wrap(Math.atan2(-P.ux, -P.uz) - P.hd) * Math.min(1, dt * 2)); P.pitch += (0 - P.pitch) * Math.min(1, dt * 3); P.bank += (0 - P.bank) * Math.min(1, dt * 4);
+      if (P.sp <= 0) { P.ph = 0; P.wt = rnd(2.5, 5); P.vt = P.v; const s = (P.x - P.ax) * P.ux + (P.z - P.az) * P.uz;   // pause ; demi-tour au sol si la piste restante est trop courte
+        if (s < .32) P.hd = Math.atan2(P.ux, P.uz); } }
+    if (P.bf) { P.bT += dt; const t = Math.min(P.bT, P.bTf), vy = -PL_G * t; P.bomb.position.set(P.bx + P.bvx * t, P.by - .5 * PL_G * t * t, P.bz + P.bvz * t);
+      bV.set(P.bvx, vy, P.bvz).normalize(); P.bomb.quaternion.setFromUnitVectors(bU, bV.negate());
+      if (P.bT >= P.bTf) { P.bf = false; P.bomb.visible = false; boom(P.E, P.ix, P.biy, P.iz); P.nb = (P.nb || 0) + 1; P.bt = rnd(2.2, 4.5); } }
+    P.o.position.set(P.x, P.y, P.z); P.o.rotation.set(-P.pitch, P.hd, P.bank); }); }
+  const enemyDbg = P => +(sideDist(ENEMY[P.sd].ln, P.x, P.z) * ENEMY[P.sd].sg).toFixed(2); WW_PLDBG = enemyDbg;
+  function planeReset() { PLANES.forEach(P => { if (P.ok) plReset1(P); P.nb = 0; }); }
   const v = new THREE.Vector3(); let on = false, last = 0;
   function tick() { const now = performance.now() / 1000, dt = Math.min(WW_DT.v, now - (last || now)); last = now; TT += dt;
-    bldTick(dt);
+    bldTick(dt); planeTick(dt);
     guns.forEach(G => { G.t -= dt; if (G.t <= 0 && !G.fly) { G.T = G.force ? { o: G.force.g } : target(G.en); const d = G.T.o.position.clone().sub(G.o.position); G.o.rotation.y = Math.atan2(-d.z, d.x); G.o.updateMatrixWorld(true);
         G.a = G.o.localToWorld(G.o.userData.muzzle.clone()); G.b = G.T.o.position.clone().add(V((Math.random() - .5) * .16, 0, (Math.random() - .5) * .16)); G.b.y = relief(G.b.x, G.b.z) + .004; if (G.force) { G.b.copy(G.force.g.position); G.b.y += G.force.H * .6; }
         G.len = G.a.distanceTo(G.b); G.dur = .9 + G.len * .35; G.fly = 0; G.fl.visible = true; G.fl.position.copy(G.a); G.ft = 0; G.sh.visible = true; G.t = 3.2 + Math.random() * 2.6; }
@@ -6856,10 +6948,10 @@ const WW = (() => {
       if (G.tr.k) trDraw(G.tr, TT); });
     markDirty(); }
   function start() { if (on) return; on = true; last = 0; gsap.ticker.add(tick); }
-  function stop() { if (!on) return; on = false; gsap.ticker.remove(tick); bldReset(); guns.forEach(G => { G.fl.visible = G.sh.visible = G.pf.visible = G.ifl.visible = G.igl.visible = G.sm.visible = G.db.visible = false; G.fly = false; G.ft = G.pt = G.it = undefined; G.tr.k = 0; G.tr.m.visible = false; G.tr.geo.setDrawRange(0, 0); }); }
+  function stop() { if (!on) return; on = false; gsap.ticker.remove(tick); bldReset(); planeReset(); guns.forEach(G => { G.fl.visible = G.sh.visible = G.pf.visible = G.ifl.visible = G.igl.visible = G.sm.visible = G.db.visible = false; G.fly = false; G.ft = G.pt = G.it = undefined; G.tr.k = 0; G.tr.m.visible = false; G.tr.geo.setDrawRange(0, 0); }); }
   const P = addProp('WW1_Europa', ['ende'], g, (P, p) => { const e = THREE.MathUtils.clamp(p, 0, 1), k = 1 - Math.pow(1 - e, 3);
     g.children.forEach(o => { if (!o.isSprite && o.geometry !== SHELL_G && !o.userData.fx) o.scale.setScalar(Math.max(k, .001) * (o.userData.s || 1)); }); g.visible = e > .005; if (e > .98) start(); else stop(); });
-  return { g, guns, men, BLD, start, stop, get on() { return on; }, P };
+  return { g, guns, men, BLD, PLANES, start, stop, get on() { return on; }, P };
 })();
 function settleProps() {
   const rc = new THREE.Raycaster(); rc.ray.direction.set(0, -1, 0);
@@ -7734,6 +7826,7 @@ const PUFF = (() => {
   const p = new THREE.Points(g, m); p.visible = false; p.renderOrder = 40; p.frustumCulled = false; camera.add(p); return p;
 })();
 function puff(dur) {
+  return;   /* p107 : nuage de particules devant la caméra pendant les transitions (« flocons ») supprimé */
   if (Q.mode === 'low') return;
   gsap.killTweensOf([PUFF.material, PUFF.position]);
   PUFF.visible = true; PUFF.position.z = 0;
@@ -8304,7 +8397,7 @@ function layoutReport() {
   });
   return { slide: currentSlide, id: S.id, items: items.length, overlaps, bounds, overflow, rects: items.map(({ kind, name, x0, y0, x1, y1 }) => ({ kind, name, r: [x0, y0, x1, y1].map(Math.round) })) };
 }
-window.__deck = { goTo: n => goTo(n), _wwDt: x => { WW_DT.v = x; }, _booksReal: () => BOOK.all.map(b => !!(b.userData.book && b.userData.book.real)), _relief: (x, z) => relief(x, z), _isLand: (x, z) => isLand(x, z), _motion: () => { const B = PROPS.find(P => P.name === 'Bahn_DOA'), lo = B && B.g.children[0]; return { ships: Object.entries(SHIPS).map(([k, S]) => [k, +S.g.position.x.toFixed(4), +S.g.position.z.toFixed(4), +S.g.position.y.toFixed(4), +S.g.rotation.y.toFixed(4), S.g.visible ? 1 : 0, +(S.o * S.v).toFixed(3), +S.u.toFixed(4)]), loco: B ? [B.g.visible ? 1 : 0, +(B.uu || 0).toFixed(4), lo ? +lo.rotation.y.toFixed(4) : 0, lo ? +lo.position.x.toFixed(4) : 0, lo ? +lo.position.z.toFixed(4) : 0, lo ? +(lo.position.y - relief(lo.position.x, lo.position.z)).toFixed(4) : 0, lo && lo.visible ? 1 : 0] : null }; }, _rotProp: (n, r) => { const o = scene.getObjectByName(n); if (!o) return null; o.rotation.y = r; markDirty(); return true; }, _cam: () => camera.position.toArray(), _probe: (pts, R = .3) => { const rc = new THREE.Raycaster(), pl = new THREE.Plane(new THREE.Vector3(0, 1, 0), -.05), v = new THREE.Vector3(); return pts.map(([sx, sy]) => { rc.setFromCamera(new THREE.Vector2(sx / innerWidth * 2 - 1, 1 - sy / innerHeight * 2), camera); if (!rc.ray.intersectPlane(pl, v)) return null; const x = +v.x.toFixed(2), z = +v.z.toFixed(2), fr = footRelief(x, z, R, R); let terr = null; const r2 = new THREE.Raycaster(); r2.ray.direction.set(0, -1, 0); Object.entries(TERR).forEach(([id, m]) => { if (!m.isMesh) return; const vis = m.visible, sy0 = m.scale.y; m.visible = true; m.scale.y = 1; m.updateMatrixWorld(true); for (const [dx, dz] of [[0, 0], [R, 0], [-R, 0], [0, R], [0, -R]]) { r2.ray.origin.set(x + dx, 30, z + dz); if (r2.intersectObject(m, false).length) terr = id; } m.visible = vis; m.scale.y = sy0; m.updateMatrixWorld(true); }); return [sx, sy, x, z, isLand(x, z), terr, +(fr.max - fr.min).toFixed(3)]; }); }, _bookS: () => { const S = BOOK.split; if (!S) return null; const g = BOOK.tpl.geometry; g.computeBoundingBox(); const P = g.attributes.position, I = S.cover.index.array, ys = []; for (let t = 0; t < I.length; t++) ys.push(P.getY(I[t])); ys.sort((a, b) => a - b); const q = f => +ys[Math.floor(f * (ys.length - 1))].toFixed(4); return { T: S.T, ycb: S.ycb, hz: S.hz, hy: S.hy, pgx: S.pgx, pgz: S.pgz, bb: [g.boundingBox.min.toArray(), g.boundingBox.max.toArray()], coverY: [q(0), q(.01), q(.05), q(.1), q(.25), q(.5)] }; }, _figs: () => FIGS.map(f => [f.img, +(f.o || 0).toFixed(2), !!f.loaded, f.sprite.visible, f.sprite.position.toArray().map(v => +v.toFixed(2))]), _bookPose: (which, a) => { const b = which === 'fazit' ? trio.children[trio.children.length - 1] : parts[parts.length - 1] && parts[parts.length - 1].o; const B = b && b.userData.book; if (!B) return null; B.hinge.rotation.x = a; const F = [.22, .4, .56, .7, .84]; B.leaves.forEach((l, i) => { l.visible = a > .01; l.rotation.x = a * F[i]; }); (B.inside || []).forEach(m => m.visible = a > .01); markDirty(); return { real: !!B.real }; }, _gap: (nm, K = 12) => { const o = scene.getObjectByName(nm); if (!o) return null; o.updateMatrixWorld(true); const b = new THREE.Box3().setFromObject(o), S = new Array(K).fill(1e9), v = new THREE.Vector3();
+window.__deck = { goTo: n => goTo(n), _look: (p, t) => { camera.position.set(p[0], p[1], p[2]); camera.lookAt(t[0], t[1], t[2]); camera.updateMatrixWorld(); markDirty(); }, _nan: () => { const r = []; scene.traverse(m => { if (m.geometry && m.geometry.attributes.position && Array.prototype.some.call(m.geometry.attributes.position.array, Number.isNaN)) r.push([m.name, m.parent && m.parent.name, m.type, m.geometry.attributes.position.count]); }); return r; }, _simT: () => WW.PLANES.length ? WW.PLANES[0].t : 0, _planes: () => WW.PLANES.map(P => [P.sd, P.ph, +P.x.toFixed(3), +P.z.toFixed(3), +(P.y - P.y0).toFixed(3), +P.L.toFixed(3), P.nb || 0, P.ok ? 1 : 0, +P.s.toFixed(3), P.E.it === undefined ? -1 : +P.E.it.toFixed(2), +P.cx.toFixed(2), +P.cz.toFixed(2), +P.bt.toFixed(2), WW_PLDBG(P), P.dbg]), _wwDt: x => { WW_DT.v = x; }, _booksReal: () => BOOK.all.map(b => !!(b.userData.book && b.userData.book.real)), _relief: (x, z) => relief(x, z), _isLand: (x, z) => isLand(x, z), _motion: () => { const B = PROPS.find(P => P.name === 'Bahn_DOA'), lo = B && B.g.children[0]; return { ships: Object.entries(SHIPS).map(([k, S]) => [k, +S.g.position.x.toFixed(4), +S.g.position.z.toFixed(4), +S.g.position.y.toFixed(4), +S.g.rotation.y.toFixed(4), S.g.visible ? 1 : 0, +(S.o * S.v).toFixed(3), +S.u.toFixed(4)]), loco: B ? [B.g.visible ? 1 : 0, +(B.uu || 0).toFixed(4), lo ? +lo.rotation.y.toFixed(4) : 0, lo ? +lo.position.x.toFixed(4) : 0, lo ? +lo.position.z.toFixed(4) : 0, lo ? +(lo.position.y - relief(lo.position.x, lo.position.z)).toFixed(4) : 0, lo && lo.visible ? 1 : 0] : null }; }, _rotProp: (n, r) => { const o = scene.getObjectByName(n); if (!o) return null; o.rotation.y = r; markDirty(); return true; }, _cam: () => camera.position.toArray(), _probe: (pts, R = .3) => { const rc = new THREE.Raycaster(), pl = new THREE.Plane(new THREE.Vector3(0, 1, 0), -.05), v = new THREE.Vector3(); return pts.map(([sx, sy]) => { rc.setFromCamera(new THREE.Vector2(sx / innerWidth * 2 - 1, 1 - sy / innerHeight * 2), camera); if (!rc.ray.intersectPlane(pl, v)) return null; const x = +v.x.toFixed(2), z = +v.z.toFixed(2), fr = footRelief(x, z, R, R); let terr = null; const r2 = new THREE.Raycaster(); r2.ray.direction.set(0, -1, 0); Object.entries(TERR).forEach(([id, m]) => { if (!m.isMesh) return; const vis = m.visible, sy0 = m.scale.y; m.visible = true; m.scale.y = 1; m.updateMatrixWorld(true); for (const [dx, dz] of [[0, 0], [R, 0], [-R, 0], [0, R], [0, -R]]) { r2.ray.origin.set(x + dx, 30, z + dz); if (r2.intersectObject(m, false).length) terr = id; } m.visible = vis; m.scale.y = sy0; m.updateMatrixWorld(true); }); return [sx, sy, x, z, isLand(x, z), terr, +(fr.max - fr.min).toFixed(3)]; }); }, _bookS: () => { const S = BOOK.split; if (!S) return null; const g = BOOK.tpl.geometry; g.computeBoundingBox(); const P = g.attributes.position, I = S.cover.index.array, ys = []; for (let t = 0; t < I.length; t++) ys.push(P.getY(I[t])); ys.sort((a, b) => a - b); const q = f => +ys[Math.floor(f * (ys.length - 1))].toFixed(4); return { T: S.T, ycb: S.ycb, hz: S.hz, hy: S.hy, pgx: S.pgx, pgz: S.pgz, bb: [g.boundingBox.min.toArray(), g.boundingBox.max.toArray()], coverY: [q(0), q(.01), q(.05), q(.1), q(.25), q(.5)] }; }, _figs: () => FIGS.map(f => [f.img, +(f.o || 0).toFixed(2), !!f.loaded, f.sprite.visible, f.sprite.position.toArray().map(v => +v.toFixed(2))]), _bookPose: (which, a) => { const b = which === 'fazit' ? trio.children[trio.children.length - 1] : parts[parts.length - 1] && parts[parts.length - 1].o; const B = b && b.userData.book; if (!B) return null; B.hinge.rotation.x = a; const F = [.22, .4, .56, .7, .84]; B.leaves.forEach((l, i) => { l.visible = a > .01; l.rotation.x = a * F[i]; }); (B.inside || []).forEach(m => m.visible = a > .01); markDirty(); return { real: !!B.real }; }, _gap: (nm, K = 12) => { const o = scene.getObjectByName(nm); if (!o) return null; o.updateMatrixWorld(true); const b = new THREE.Box3().setFromObject(o), S = new Array(K).fill(1e9), v = new THREE.Vector3();
     o.traverse(m => { if (!m.isMesh || !m.visible) return; const A = m.geometry.attributes.position; for (let i = 0; i < A.count; i += 3) { v.fromBufferAttribute(A, i).applyMatrix4(m.matrixWorld); const k = Math.min(K - 1, Math.floor((v.x - b.min.x) / (b.max.x - b.min.x) * K)); S[k] = Math.min(S[k], v.y - relief(v.x, v.z)); } });
     return S.map(x => +(x * 100).toFixed(2)); }, _tex: () => FIGS.filter(f => f.loaded).map(f => { const im = f.sprite.material.map && f.sprite.material.map.image; return [f.img, im ? im.width + 'x' + im.height : null, (DIMS[f.img] || []).join('x')]; }).concat([...TEX.entries()].filter(([k, e]) => e.tex).map(([k, e]) => [k, (e.tex.image.naturalWidth || e.tex.image.width) + 'x' + (e.tex.image.naturalHeight || e.tex.image.height), (DIMS[k] || []).join('x')])), _ll: (lon, lat) => { const p = llW(lon, lat); return [+p.x.toFixed(3), +p.z.toFixed(3), +relief(p.x, p.z).toFixed(3)]; }, _proj: (x, y, z) => { const v = new THREE.Vector3(x, y, z).project(camera); return [Math.round((v.x + 1) / 2 * innerWidth), Math.round((1 - v.y) / 2 * innerHeight)]; }, _wwGround: () => WW.guns.map(G => G.o).concat(WW.men.fr.concat(WW.men.de, WW.men.ru).map(M => M.o)).map(o => { const b = new THREE.Box3().setFromObject(o, true), cx = (b.min.x + b.max.x) / 2, cz = (b.min.z + b.max.z) / 2, fr = footRelief(cx, cz, b.max.x - b.min.x, b.max.z - b.min.z); return [+((b.min.y - fr.max) * 100).toFixed(1), +((b.min.y - fr.min) * 100).toFixed(1)]; }), _ww: () => ({ on: WW.on, guns: WW.guns.map(G => [G.n, G.sh.visible, G.fl.visible, G.pf.visible, G.s, G.T && G.T.s, G.tr.k, G.sm.visible, G.db.visible]), gp: WW.guns.map(G => [G.s, +G.o.position.x.toFixed(2), +G.o.position.z.toFixed(2)]), bp: WW.BLD.map(B => [+B.g.position.x.toFixed(2), +B.g.position.z.toFixed(2), +(B.hw || 0).toFixed(2)]), bld: WW.BLD.map(B => [B.k, !!B.ok, !!B.shot, B.burn === undefined ? null : +B.burn.toFixed(2)]), t: WW.guns.map(G => [+(+G.t).toFixed(2), G.fly === undefined ? 'u' : G.fly === false ? 'f' : +(+G.fly).toFixed(2)]), smd: WW.guns.filter(G => G.sm.visible).map(G => [G.sm.position.toArray().map(v => +v.toFixed(3)), +G.sm.scale.x.toFixed(3), +G.sm.material.opacity.toFixed(2), G.sm.parent && G.sm.parent.visible, +(G.it || 0).toFixed(2), G.pf.visible, +G.pf.material.opacity.toFixed(2)]), imp: WW.guns.filter(G => G.sm.visible).map(G => G.b.toArray().map(v => +v.toFixed(3))) }), _books: () => { const r = renderer.info.render; return [modelRoot.visible, +STOW.s.toFixed(2), r.calls]; }, _planeRects: () => PLANES.filter(p => p.slide === currentSlide).map(p => { p.group.updateMatrixWorld(true); const b = new THREE.Box3().setFromObject(p.photo); let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
     for (const x of [b.min.x, b.max.x]) for (const y of [b.min.y, b.max.y]) for (const z of [b.min.z, b.max.z]) { const v = new THREE.Vector3(x, y, z).project(camera), sx = (v.x + 1) / 2 * innerWidth, sy = (1 - v.y) / 2 * innerHeight; x0 = Math.min(x0, sx); x1 = Math.max(x1, sx); y0 = Math.min(y0, sy); y1 = Math.max(y1, sy); }
