@@ -5060,6 +5060,17 @@ window.INFOCARDS = [
 
 
 
+
+
+
+
+
+
+
+
+
+
+
 <!-- ======================= APPLICATION ======================= -->
 <script type="module">
 /* hors ligne : bibliothèques intégrées plus haut (window.THREE / window.GLTFLoader / window.gsap) */
@@ -5514,7 +5525,7 @@ function worldSVG({ crop = null, hl = null, u = 1, step = 10, pin = null, routes
   <path d="${W.lakes || ''}" fill="#15191B" stroke="#7E7462" stroke-width="${(crop ? .5 : .9) * u}" stroke-opacity=".6"/>
   <circle cx="${k[0]}" cy="${k[1]}" r="${kr}" fill="${hl === 'kiautschou' ? PAL.fill : PAL.deep}" stroke="#F1E7D2" stroke-width="${1.4 * u}"/>
   <g fill="none" stroke="#CFC3AC" stroke-width="${(crop ? 1.1 : 2.6) * u}" stroke-dasharray="${9 * u} ${7 * u}" opacity=".45">${rts}</g>
-  <circle cx="${W.pts.hamburg[0]}" cy="${W.pts.hamburg[1]}" r="${(crop ? 3 : 9) * u}" fill="#EEE6D4"/>
+  <circle cx="${W.pts.hamburg[0]}" cy="${W.pts.hamburg[1]}" r="${(crop ? 3 : 3.2) * u}" fill="#D9CFBA" stroke="#15191B" stroke-width="${1.2 * u}"/>
   ${pin ? `<circle cx="${pin[0]}" cy="${pin[1]}" r="${3.2 * u}" fill="#EEE6D4" stroke="#15191B" stroke-width="${1.2 * u}"/>` : ''}
   ${glab}
 </svg>`;
@@ -6030,7 +6041,18 @@ const MODEL_CREDITS = ['„ETH: Travel theodolite, 1899 / Reise-Theodolit“ von
   '„Haussmannien building 3“ von pacpak, sketchfab.com/3d-models/9c028403d5894752bffba7b25b1b2266',
   '„Building Scheibenstrasse“ von grs (sgrosjean), sketchfab.com/3d-models/82e33f5433274194b1633ff2f632047c',
   '„Fokker Dr.I – Rise of Flights“ von KojfDiscord, sketchfab.com/3d-models/700ec52cb0744508b0774219979ca2bc',
-  '„Nieuport 17.C1 – Rise of Flights“ von KojfDiscord, sketchfab.com/3d-models/39b85024cb00479ca0a41c89064e4206'].map(t => t + ', CC BY 4.0 (optimiert)');
+  '„Nieuport 17.C1 – Rise of Flights“ von KojfDiscord, sketchfab.com/3d-models/39b85024cb00479ca0a41c89064e4206',
+  '„Caquot Observation Balloon“ von Romania 100 – Marea Unire (@Acum100ani.ro), sketchfab.com/3d-models/6505e342f89f400ea889795c732082f8',
+  '„Thornycroft Qf 13 Pounder Gun“ von ivanfreitas777, sketchfab.com/3d-models/b7789a34fd304825a863e9c2e4e5d9e9 (Lkw je Nation getönt)',
+  '„LMS Fowler 4F“ von Steve Emfore, sketchfab.com/3d-models/b84f7a5079d343ea83b35cb10517565e',
+  '„Mahogany Table“ von myndman, sketchfab.com/3d-models/e9ef3eadee9d4491b7c59fdbb19c30cd',
+  '„Victorian Chairs“ von Matthew Collings, sketchfab.com/3d-models/a12b3c2a6f9c4b99ad618242e86e12fe',
+  '„Old Map 3D Model“ von Johana-PS, sketchfab.com/3d-models/c8f056e093f74be99b2e83034099c40a',
+  '„Inkwell glass with quill pen Victorian style“ von Rylae Shylna, sketchfab.com/3d-models/64812fa9b17248e0aacb1800a278972b',
+  '„CC0 - Wax Seal 2“ von plaggy, sketchfab.com/3d-models/bd18fd7b6c1847bc8e7d9e779c122ed5',
+  '„Sjøbodene i Christiania 1798“ von Tidvis, sketchfab.com/3d-models/24360d044f9e41b2a26eb26fbc4135ab',
+  '„Acacia tree“ von evolveduk, sketchfab.com/3d-models/bb14c2bb679b4d0bb1c578a27e2ddabf',
+  '„African Elephant Textured“ von JohnMesplay, sketchfab.com/3d-models/49ad44f03f374433ac3a4f3143d7980c'].map(t => t + ', CC BY 4.0 (optimiert)');
 const DESK_OBJ = [];
 function deskReal(name, file, fit, x, z, ry, out, proxy) {
   const o = deskObj(name, g => { const pr = new THREE.Mesh(new THREE.BoxGeometry(...proxy)); pr.position.y = proxy[1] / 2; pr.visible = false; g.add(pr); g.userData.proxy = pr; }, x, z, ry, out);
@@ -6269,7 +6291,7 @@ function buildTerritories() {
 const terrOff = id => { const m = TERR[id]; return m && m.visible && m.scale.y > .002 ? TERR_H * m.scale.y + .006 : 0; };
 function terrRide() {                                   // hauteur du dessus du territoire → rails (DOA) et personnages posés dessus
   const o = terrOff('doa');
-  RAILS.forEach(R => { R.tube.position.y = R.im.position.y = o; R.ends.forEach(e => { e.position.y = e.userData.y0 + o; }); });
+  RAILS.forEach(R => { R.tube.position.y = R.im.position.y = o; R.rails.forEach(r => r.position.y = o); R.ends.forEach(e => { e.position.y = e.userData.y0 + o; }); });
   FIGS.forEach(f => { if (f.inTerr) f.sprite.position.y = f.y0 + terrOff(f.inTerr); });
   if (typeof PROPS !== 'undefined') PROPS.forEach(P => { if (!P.inTerr) return; const m = TERR[P.inTerr]; P.g.position.y = P.inTerr === 'kiautschou' ? (m && m.visible ? m.position.y + (TERR_H + .04) * m.scale.y : P.y0) : P.y0 + terrOff(P.inTerr); });
   markDirty();
@@ -6432,23 +6454,27 @@ function buildRails() {
   const st = ll => mapPt(lonX(ll[0]), latY(ll[1]), .02);
   const lines = [[[39.10, -5.07], [38.47, -5.15], [38.29, -4.89], [37.68, -4.20], [37.34, -3.35]],
                  [[39.28, -6.82], [37.66, -6.82], [36.98, -6.83], [35.74, -6.17], [34.10, -5.30], [32.80, -5.02], [31.20, -4.95], [29.63, -4.88]]];
-  const ink = new THREE.MeshStandardMaterial({ color: 0x1C1814, roughness: .7 }), tie = new THREE.MeshStandardMaterial({ color: 0xD8CDB4, roughness: .8 });
+  const ink = new THREE.MeshStandardMaterial({ color: 0x1C1814, roughness: .7 }), tie = new THREE.MeshStandardMaterial({ color: 0x5E4A36, roughness: .9 }), bal = new THREE.MeshStandardMaterial({ color: 0x5C564C, roughness: 1 }),
+    steel = new THREE.MeshStandardMaterial({ color: 0x55565A, roughness: .35, metalness: .8 });   /* p109 : voie réaliste – ballast, traverses bois, deux rails acier */
   lines.forEach(ll => {
     const base = new THREE.CatmullRomCurve3(ll.map(st), false, 'centripetal', .3), nb = Math.max(24, Math.round(base.getLength() / .04));
     const curve = new THREE.CatmullRomCurve3(base.getSpacedPoints(nb).map(q => { q.y = .02 + relief(q.x, q.z); return q; }), false, 'catmullrom', .5), L = curve.getLength(), seg = Math.max(60, nb * 2);
-    const tube = new THREE.Mesh(new THREE.TubeGeometry(curve, seg, .022, 6, false), ink); tube.visible = false; scene.add(tube);
-    const nt = Math.floor(L / .14), im = new THREE.InstancedMesh(BOX_GEO, tie, nt), o = new THREE.Object3D(), t = new THREE.Vector3();
-    for (let i = 0; i < nt; i++) { const u = (i + .5) / nt; curve.getPointAt(u, o.position); curve.getTangentAt(u, t); o.position.y = .012 + relief(o.position.x, o.position.z);
-      o.rotation.set(0, Math.atan2(-t.z, t.x), 0); o.scale.set(.025, .02, .11); o.updateMatrix(); im.setMatrixAt(i, o.matrix); }
+    const tube = new THREE.Mesh(new THREE.TubeGeometry(curve, seg, .03, 6, false).translate(0, -.036, 0), bal); tube.visible = false; tube.receiveShadow = true; scene.add(tube);
+    const rails = [-1, 1].map(sg => { const pts = []; const t0 = new THREE.Vector3(); for (let k = 0; k <= seg; k++) { const u = k / seg, q = curve.getPointAt(u); curve.getTangentAt(u, t0); const n = Math.hypot(t0.x, t0.z) || 1;
+        q.x += -t0.z / n * .024 * sg; q.z += t0.x / n * .024 * sg; q.y = .02 + .0045 + relief(q.x, q.z); pts.push(q); }
+      const r = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), seg, .0042, 4, false), steel); r.visible = false; r.castShadow = r.receiveShadow = true; scene.add(r); return r; });
+    const nt = Math.floor(L / .045), im = new THREE.InstancedMesh(BOX_GEO, tie, nt), o = new THREE.Object3D(), t = new THREE.Vector3();
+    for (let i = 0; i < nt; i++) { const u = (i + .5) / nt; curve.getPointAt(u, o.position); curve.getTangentAt(u, t); o.position.y = .016 + relief(o.position.x, o.position.z);
+      o.rotation.set(0, Math.atan2(-t.z, t.x), 0); o.scale.set(.014, .008, .082); o.updateMatrix(); im.setMatrixAt(i, o.matrix); }
     im.count = 0; im.visible = false; scene.add(im);
     const ends = [0, 1].map(u => { const c = new THREE.Mesh(new THREE.CylinderGeometry(.055, .055, .04, 16), ink); c.geometry.translate(0, .02, 0); curve.getPointAt(u, c.position); c.position.y = c.userData.y0 = .006 + relief(c.position.x, c.position.z) - .012; c.scale.setScalar(.001); c.visible = false; scene.add(c); return c; });
-    RAILS.push({ tube, im, nt, ends, curve, idx: tube.geometry.index.count, p: 0 });
+    im.receiveShadow = im.castShadow = true; RAILS.push({ tube, rails, im, nt, ends, curve, idx: tube.geometry.index.count, ridx: rails[0].geometry.index.count, p: 0 });
   });
 }
 function showRails(on, delay) {
   RAILS.forEach((R, j) => {
     gsap.killTweensOf(R); R.ends.forEach(e => gsap.killTweensOf(e.scale));
-    const set = p => { R.p = p; R.tube.geometry.setDrawRange(0, Math.floor(R.idx * p / 6) * 6); R.im.count = Math.floor(R.nt * p); R.tube.visible = R.im.visible = p > .001; markDirty(); };
+    const set = p => { R.p = p; R.tube.geometry.setDrawRange(0, Math.floor(R.idx * p / 6) * 6); R.rails.forEach(r => { r.geometry.setDrawRange(0, Math.floor(R.ridx * p / 6) * 6); r.visible = p > .001; }); R.im.count = Math.floor(R.nt * p); R.tube.visible = R.im.visible = p > .001; markDirty(); };
     if (on) {
       set(LOWQ() ? 1 : R.p);
       gsap.to(R, { p: 1, duration: LOWQ() ? 0 : 2.6, delay: delay + j * .6, ease: 'power2.inOut', onUpdate() { set(R.p); } });
@@ -6520,18 +6546,57 @@ Object.entries(GOODS).forEach(([port, [ll, tw, kinds]]) => {
   const LP = addProp('Leuchtturm_Tsingtau', ['kiautschou'], g, (P, p) => { const e = THREE.MathUtils.clamp(p, 0, 1), k = 1 - Math.pow(1 - e, 3); tw.scale.set(1, Math.max(k, .001), 1); PM.lamp.emissiveIntensity = .2 + .8 * THREE.MathUtils.smoothstep(e, .8, 1); });
   LP.inTerr = 'kiautschou';
 })();
-/* wagonnet de la ligne centrale : locomotive-tender et un wagon de sisal, roulent de Dar es Salaam vers l'intérieur sur la voie (après le tracé) */
-(() => { const g = new THREE.Group(), loco = new THREE.Group(), wag = new THREE.Group(); g.add(loco, wag);
-  realOnce('loco').then(sc => { const w = fitModel(sc, { L: .24, env: .35 }); const b = new THREE.Box3().setFromObject(w); if (b.max.z - b.min.z > b.max.x - b.min.x) w.rotation.y = Math.PI / 2; loco.add(w); markDirty(); }).catch(e => console.info('[loco]', e && e.message));   /* p61 : locomotive n° 9 (1905), scan, CC BY */
-  const t = new THREE.Vector3(), q = new THREE.Vector3();
-  const _lA = new THREE.Vector3(), _lB = new THREE.Vector3();
-  addProp('Bahn_DOA', ['doa'], g, (P, p) => { const R = RAILS[1]; if (!R) return; if (!P.leaving) P.uu = .015 + .97 * THREE.MathUtils.clamp(p, 0, 1); const u0 = P.uu || .015;   /* p75 : trajet complet Daressalam → Kigoma (ease in/out par la tween), repos au terminus */
+/* p116 : axe long réel d'un modèle (ACP des sommets dans le plan XZ du parent) → aligné sur +X local et recentré (aucun « crabe » sur la voie) */
+function alignLongX(w, par) { par.add(w); par.updateMatrixWorld(true); const inv = par.matrixWorld.clone().invert(), v = new THREE.Vector3(); let n = 0, mx = 0, mz = 0, sxx = 0, szz = 0, sxz = 0;
+  const pts = []; w.traverse(m => { if (!m.isMesh) return; const A = m.geometry.attributes.position, st = Math.max(1, Math.floor(A.count / 4000)); for (let i = 0; i < A.count; i += st) { v.fromBufferAttribute(A, i).applyMatrix4(m.matrixWorld).applyMatrix4(inv); pts.push(v.x, v.z); } });
+  for (let i = 0; i < pts.length; i += 2) { mx += pts[i]; mz += pts[i + 1]; n++; } mx /= n; mz /= n;
+  for (let i = 0; i < pts.length; i += 2) { const dx = pts[i] - mx, dz = pts[i + 1] - mz; sxx += dx * dx; szz += dz * dz; sxz += dx * dz; }
+  const phi = .5 * Math.atan2(2 * sxz, sxx - szz);   // angle de l'axe principal (x, z)
+  w.rotation.y += phi; par.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(w), c = par.worldToLocal(bb.getCenter(new THREE.Vector3()));
+  w.position.x -= c.x; w.position.z -= c.z; par.updateMatrixWorld(true); return phi; }
+/* p109 : train réaliste – locomotive n° 9 (scan) + 2 wagons ; chaque véhicule posé sur ses deux essieux (points de la voie à ± demi-empattement,
+   abscisse curviligne → vitesse constante), cap = corde entre essieux (aucun glissement latéral, aucun lissage retardé) ;
+   départ/arrivée adoucis (tween power1.inOut) ; vapeur : 14 bouffées en réserve, émises par la cheminée selon la vitesse. */
+(() => { const g = new THREE.Group(), loco = new THREE.Group(); g.add(loco);
+  const WM = { body: new THREE.MeshStandardMaterial({ color: 0x4A3A2C, roughness: .85 }), iron: new THREE.MeshStandardMaterial({ color: 0x26241F, roughness: .5, metalness: .6 }), roof: new THREE.MeshStandardMaterial({ color: 0x3B3B38, roughness: .7 }) };
+  const wagon = (kind) => { const O = new THREE.Group(), o = new THREE.Group(); o.scale.setScalar(.72); O.add(o); const m = (geo, mat, x, y, z) => { const e = new THREE.Mesh(geo, mat); e.position.set(x, y, z); e.castShadow = e.receiveShadow = true; o.add(e); return e; };   /* p109 : échelle de la machine n° 9 (voie étroite) */
+    const wl = new THREE.CylinderGeometry(.011, .011, .006, 12); wl.rotateX(Math.PI / 2);
+    [-.045, .045].forEach(x => [-.024, .024].forEach(z => m(wl, WM.iron, x, .011, z)));
+    m(new THREE.BoxGeometry(.16, .008, .066), WM.iron, 0, .024, 0);
+    if (kind === 'van') { m(new THREE.BoxGeometry(.15, .052, .062), WM.body, 0, .054, 0); m(new THREE.BoxGeometry(.158, .006, .07), WM.roof, 0, .083, 0); }
+    else { m(new THREE.BoxGeometry(.15, .014, .062), WM.body, 0, .035, 0); const b = new THREE.CylinderGeometry(.016, .016, .056, 10); b.rotateX(Math.PI / 2);
+      [-.05, -.017, .017, .05].forEach(x => m(b, PM.sisal, x, .058, 0)); [-.033, 0, .033].forEach(x => m(b, PM.sisal, x, .086, 0)); }
+    O.userData.L = .116; return O; };
+  const cars = [loco, wagon('van'), wagon('flat')]; cars[1].userData.L = cars[2].userData.L = .116; loco.userData.L = .24; cars.slice(1).forEach(c => g.add(c));
+  const chim = new THREE.Vector3(.09, .12, 0);
+  realOnce('loco').then(sc => { const w = fitModel(sc, { H: .1, env: .35 }); alignLongX(w, loco);   /* p109 : le scan est long selon z (l'emprise x inclut des morceaux de rails scannés) */
+    loco.updateMatrixWorld(true); { const bx = new THREE.Box3().setFromObject(w); loco.userData.L = Math.min(.2, bx.max.x - bx.min.x); } const inv = loco.matrixWorld.clone().invert(), v = new THREE.Vector3(); let top = -1e9;   // cheminée = sommet le plus haut (machine-tender sans abri)
+    w.traverse(m => { if (!m.isMesh) return; m.castShadow = true; const A = m.geometry.attributes.position; for (let i = 0; i < A.count; i += 7) { v.fromBufferAttribute(A, i).applyMatrix4(m.matrixWorld).applyMatrix4(inv); if (v.y > top) { top = v.y; chim.copy(v); } } });
+    if (chim.x < 0) { w.rotation.y += Math.PI; chim.x = -chim.x; chim.z = -chim.z; }   // cheminée vers l'avant (sens de marche)
+    markDirty(); }).catch(e => console.info('[loco]', e && e.message));   /* p61 : locomotive n° 9 (1905), scan, CC BY */
+  const STEAM = new THREE.SpriteMaterial({ map: (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'), r = x.createRadialGradient(32, 32, 0, 32, 32, 32);
+    r.addColorStop(0, 'rgba(236,232,224,.9)'); r.addColorStop(.6, 'rgba(225,220,210,.35)'); r.addColorStop(1, 'rgba(220,215,205,0)'); x.fillStyle = r; x.fillRect(0, 0, 64, 64); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; })(), depthWrite: false, transparent: true });
+  const PUFFS = Array.from({ length: 14 }, () => { const s = new THREE.Sprite(STEAM.clone()); s.visible = false; scene.add(s); return { s, t: 9, x: 0, y: 0, z: 0, dx: 0, dz: 0 }; });
+  let pk = 0, emit = 0, lastU = 0, lastT = 0, spd = 0;
+  const qA = new THREE.Vector3(), qB = new THREE.Vector3(), cw = new THREE.Vector3();
+  function place(R, P, u0) { const L = R.curve.getLength(); let s = u0 * L;
+    cars.forEach((o, i) => { const h = o.userData.L * .36, sa = Math.min(L, Math.max(0, s + h)), sb = Math.min(L, Math.max(0, s - h));
+      R.curve.getPointAt(sa / L, qA); R.curve.getPointAt(sb / L, qB);
+      const ya = relief(qA.x, qA.z), yb = relief(qB.x, qB.z), yo = .02 + .009 + R.tube.position.y;
+      o.position.set((qA.x + qB.x) / 2, (ya + yb) / 2 + yo, (qA.z + qB.z) / 2); o.rotation.set(0, Math.atan2(-(qA.z - qB.z), qA.x - qB.x), Math.atan2(ya - yb, Math.hypot(qA.x - qB.x, qA.z - qB.z)), 'YZX');
+      if (i < cars.length - 1) s -= o.userData.L / 2 + .012 + cars[i + 1].userData.L / 2; }); }
+  const BP = addProp('Bahn_DOA', ['doa'], g, (P, p) => { const R = RAILS[1]; if (!R) return; const Lr = R.curve.getLength(), us = .42 / Lr, ue = 1 - .15 / Lr; if (!P.leaving) P.uu = us + (ue - us) * THREE.MathUtils.clamp(p, 0, 1); const u0 = P.uu || us;   /* p75 : trajet complet Daressalam → Kigoma ; repos au terminus */
     const sc = P.leaving ? THREE.MathUtils.smoothstep(p, 0, 1) : THREE.MathUtils.smoothstep(p, 0, .06) * THREE.MathUtils.smoothstep(R.p, .85, 1);
-    [[loco, u0], [wag, Math.max(0, u0 - .012)]].forEach(([o, u]) => { R.curve.getPointAt(u, q);
-      /* p75 : cap = corde lissée (u ± 0,6 %) → suit la voie sans crabe ni à-coups aux sommets ; assise = relief rendu sous les roues */
-      const ua = Math.max(0, u - .006), ub = Math.min(1, u + .006); R.curve.getPointAt(ua, _lA); R.curve.getPointAt(ub, _lB); t.subVectors(_lB, _lA);
-      o.position.set(q.x, .02 + relief(q.x, q.z) + R.tube.position.y + .006, q.z); if (p < .002 || P.leaving) o._snap = true; o.rotation.set(0, dampYaw(o, Math.atan2(-t.z, t.x), 1.8), 0); });
-    g.scale.setScalar(1); g.children.forEach(o => { o.scale.setScalar(Math.max(sc, .001)); o.visible = sc > .002; }); });
+    place(R, P, u0); g.children.forEach(o => { o.scale.setScalar(Math.max(sc, .001)); o.visible = sc > .002; }); });
+  gsap.ticker.add(() => { if (!g.visible) { if (PUFFS[0].s.visible || pk) { PUFFS.forEach(q => { q.s.visible = false; q.t = 9; }); pk = 0; } return; }
+    const R = RAILS[1]; if (!R || !loco.visible) return; const now = performance.now() / 1000, dt = Math.min(.1, now - (lastT || now)); lastT = now;
+    const u = BP.uu || 0, v = dt > 0 ? Math.abs(u - lastU) * R.curve.getLength() / dt : 0; lastU = u; spd += (v - spd) * Math.min(1, dt * 4);
+    emit -= dt * (1.2 + spd * 14); let live = false;
+    if (emit <= 0) { emit = 1; const q = PUFFS[pk++ % PUFFS.length]; loco.updateMatrixWorld(); cw.copy(chim).applyMatrix4(loco.matrixWorld); q.x = cw.x; q.y = cw.y + .005; q.z = cw.z; q.t = 0;
+      q.dx = (Math.random() - .5) * .02; q.dz = (Math.random() - .5) * .02; q.s.visible = true; }
+    PUFFS.forEach(q => { if (q.t >= 1.7) { q.s.visible = false; return; } q.t += dt; live = true; const k = q.t / 1.7;
+      q.s.position.set(q.x + q.dx * k, q.y + .14 * Math.pow(k, .7), q.z + q.dz * k); q.s.scale.setScalar(.03 + .11 * Math.pow(k, .6)); q.s.material.opacity = .75 * Math.min(1, q.t / .12) * Math.pow(1 - k, 1.5); });
+    if (live) markDirty(); });
 })();
 /* casque à pointe (Pickelhaube) posé au Waterberg — cuir noir verni, pointe et plaque de laiton, jugulaire */
 (() => { const g = new THREE.Group(), c = { x: 1.89, z: 14.81 }, G = groundAt(c.x, c.z, .16, .16); g.position.set(c.x, G.y, c.z); g.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), G.n); g.rotateY(.6); g.scale.setScalar(1.8);
@@ -6593,6 +6658,78 @@ Object.entries(GOODS).forEach(([port, [ll, tw, kinds]]) => {
   const y0 = footRelief(c.x, c.z, (Lr + .05) * 1.7, .7).max; g.position.set(c.x, y0, c.z); g.rotation.y = SCROLL_AT[2]; g.scale.setScalar(1.7);
   addProp('Kartenrolle', ['hintergrund'], g, (P, p) => { const q = THREE.MathUtils.smoothstep(p, 0, 1), d = (1 - q) * .5;
     roll.position.set(0, R + .0036, -d); roll.rotation.x = -d / R; roll.visible = p > .005; });          // roule sans glisser (angle = distance / rayon)
+})();
+/* p113 : trois dioramas animés (modèles réels uniquement ; éléments sans modèle omis)
+   (1) hintergrund : Berliner Konferenz – table d'acajou, chaises victoriennes, carte ancienne où l'Afrique se partage (frontières tracées progressivement), encrier + plume, sceau de cire
+   (2) kiautschou : port de Tsingtau – entrepôts de quai, deux vapeurs entrant/sortant sur une boucle (abscisse curviligne, cap = tangente), fumée des cheminées
+   (3) doa : savane de la ligne centrale – acacias, éléphants (le train existant parcourt toute la ligne Daressalam → Kigoma) */
+const DIO = {};
+function dioLoad(key, opt, cb) { realOnce(key).then(sc => { const w = fitModel(sc, opt); w.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } }); cb(w); markDirty(); }).catch(e => console.info('[dio]', key, e && e.message)); }
+const DIO_SMOKE = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'), r = x.createRadialGradient(32, 32, 0, 32, 32, 32); r.addColorStop(0, 'rgba(70,66,62,.75)'); r.addColorStop(1, 'rgba(70,66,62,0)'); x.fillStyle = r; x.fillRect(0, 0, 64, 64);
+  const t = new THREE.CanvasTexture(c); return new THREE.SpriteMaterial({ map: t, depthWrite: false, transparent: true }); })();
+const dioSize = o => { const b = new THREE.Box3().setFromObject(o); return { b, s: b.getSize(new THREE.Vector3()) }; };
+/* (1) Berliner Konferenz */
+(() => { const g = new THREE.Group(), BC = [1.04, -6.45], S = 3.0, G0 = groundAt(BC[0], BC[1], .45 * S, .45 * S); g.position.set(BC[0], G0.y + .002, BC[1]); g.rotation.y = .5;
+  const top = { y: .38 * S }, cv = document.createElement('canvas'); cv.width = cv.height = 512; const cx = cv.getContext('2d'), mapTex = new THREE.CanvasTexture(cv); mapTex.colorSpace = THREE.SRGBColorSpace;
+  const k = W.k, X0 = (-20 - W.lon0) * k, Y0 = (W.lat0 - 38) * k, SC = 512 / (75 * k), LAND = new Path2D(W.land), BOR = new Path2D(W.borders), COLS = ['togo', 'kamerun', 'dswa', 'doa'].map(n => W.col[n] && new Path2D(W.col[n])).filter(Boolean);
+  let drawn = -1; const draw = p => { const q = Math.round(p * 60) / 60; if (q === drawn) return; drawn = q;
+    cx.setTransform(1, 0, 0, 1, 0, 0); cx.fillStyle = '#D9C9A2'; cx.fillRect(0, 0, 512, 512);
+    cx.setTransform(SC, 0, 0, SC, -X0 * SC, -Y0 * SC); cx.fillStyle = '#B99A68'; cx.fill(LAND); cx.lineWidth = 1.2 / SC; cx.strokeStyle = '#5E4528'; cx.stroke(LAND);
+    const a = THREE.MathUtils.smoothstep(q, .45, 1); if (a > 0) { cx.fillStyle = `rgba(150,40,28,${.75 * a})`; COLS.forEach(P => cx.fill(P)); }
+    const D = 60000; cx.setLineDash([D * q, D * 2]); cx.lineWidth = 1.6 / SC; cx.strokeStyle = '#3A1C10'; cx.stroke(BOR); cx.setLineDash([]); mapTex.needsUpdate = true; markDirty(); };
+  draw(0);
+  dioLoad('bc_table', { L: .9 * S, env: .5 }, w => { const { b } = dioSize(w); top.y = b.max.y; g.add(w);
+    dioLoad('bc_map', { L: .7 * S, env: .3 }, m => { m.traverse(o => { if (o.isMesh) { o.material = o.material.clone(); o.material.map = mapTex; o.material.color.set(0xffffff); o.material.needsUpdate = true; o.castShadow = false; } });
+      const { b: bm } = dioSize(m); m.position.y = top.y - bm.min.y + .002; m.rotation.y = .2; g.add(m); });
+    dioLoad('bc_inkquill', { H: .13 * S, env: .6 }, m => { const { b: bm } = dioSize(m); m.position.set(.3 * S, top.y - bm.min.y, .12 * S); g.add(m); });
+    dioLoad('bc_seal', { L: .07 * S, env: .5 }, m => { const { b: bm } = dioSize(m); m.position.set(-.28 * S, top.y - bm.min.y, -.16 * S); m.rotation.y = 1; g.add(m); }); });
+  dioLoad('bc_chairs', { H: .5 * S, env: .5 }, w => { const ms = []; w.traverse(o => { if (o.isMesh) ms.push(o); }); if (!ms.length) return;
+    const one = (mesh) => { const c = w.clone(true); c.traverse(o => { if (o.isMesh && o.name !== mesh.name) o.visible = false; }); const { b } = dioSize((() => { const t = new THREE.Group(); const cm = c.getObjectByName(mesh.name); return cm; })()); const p = new THREE.Group(); c.position.set(-(b.min.x + b.max.x) / 2, -b.min.y, -(b.min.z + b.max.z) / 2); p.add(c); return p; };
+    for (let i = 0; i < 4; i++) { const ch = one(ms[i % ms.length]), a = i * Math.PI / 2 + .35; ch.position.set(Math.cos(a) * .56 * S, 0, Math.sin(a) * .56 * S); ch.rotation.y = -a - Math.PI / 2 + DIO.chairRY; g.add(ch); } });
+  DIO.chairRY = 0;
+  const BP = addProp('Berliner_Konferenz', ['hintergrund'], g, (P, p) => { const e = THREE.MathUtils.clamp(p, 0, 1), s = 1 - Math.pow(1 - e, 3); g.scale.setScalar(Math.max(s, .001)); });
+  let t0 = 0; gsap.ticker.add(() => { if (!g.visible) { t0 = 0; if (drawn !== 0) draw(0); return; } const now = performance.now() / 1000; if (!t0) t0 = now; draw(THREE.MathUtils.clamp((now - t0 - 1.2) / 9, 0, 1)); });
+  DIO.bc = { g, BP, draw };
+})();
+/* (2) Tsingtau */
+(() => { const g = new THREE.Group(); scene.add; const kp = W.pts.tsingtau, P0 = mapPt(kp[0], kp[1]); g.position.set(0, 0, 0);
+  let best = null; for (let i = 0; i < 24; i++) { const a = i / 24 * Math.PI * 2, dx = Math.cos(a), dz = Math.sin(a); let ok = 0; for (let r = .25; r <= 1.6; r += .05) { if (isLand(P0.x + dx * r, P0.z + dz * r)) break; ok = r; } if (!best || ok > best.ok) best = { ok, dx, dz }; }
+  const { dx, dz } = best, nx = -dz, nz = dx, at = (r, l) => new THREE.Vector3(P0.x + dx * r + nx * l, .0, P0.z + dz * r + nz * l);
+  const loop = new THREE.CatmullRomCurve3([at(.32, .07), at(.6, .1), at(.85, .12), at(1.05, .1), at(1.16, 0), at(1.05, -.1), at(.85, -.12), at(.6, -.1), at(.32, -.07), at(.24, 0)], true, 'centripetal');
+  const LL = loop.getLength(), ships = [], puffs = Array.from({ length: 20 }, () => { const s = new THREE.Sprite(DIO_SMOKE.clone()); s.visible = false; g.add(s); return { s, t: 9, x: 0, y: 0, z: 0 }; });
+  realOnce('ship').then(() => { if (!SHIP_REAL) return; [0, .5].forEach(ph => { const o = new THREE.Group(), w = SHIP_REAL.clone(true); w.traverse(m => { if (m.isMesh) { m.castShadow = true; } }); o.add(w); o.scale.setScalar(.3); g.add(o);
+      o.updateMatrixWorld(true); const inv = o.matrixWorld.clone().invert(), v = new THREE.Vector3(), f = new THREE.Vector3(0, -1e9, 0); w.traverse(m => { if (!m.isMesh) return; const A = m.geometry.attributes.position; for (let i = 0; i < A.count; i += 7) { v.fromBufferAttribute(A, i).applyMatrix4(m.matrixWorld).applyMatrix4(inv); if (v.y > f.y && Math.abs(v.z) < .05) f.copy(v); } });
+      ships.push({ o, ph, f, e: 0 }); }); markDirty(); }).catch(() => {});
+  dioLoad('ts_warehouse', { L: .5, env: .5 }, w => { w.traverse(o => { if (o.isMesh && /^Plane_/.test(o.name)) o.visible = false; }); const { b } = dioSize(w); let r0 = .3; while (r0 > -.4 && !isLand(P0.x + dx * r0 - nx * .42, P0.z + dz * r0 - nz * .42)) r0 -= .02; const c = { x: P0.x + dx * (r0 - .12) - nx * .42, z: P0.z + dz * (r0 - .12) - nz * .42 }, G = groundAt(c.x, c.z, .25, .2);
+    w.position.y = -b.min.y; const h = new THREE.Group(); h.add(w); h.position.set(c.x, G.y, c.z); h.rotation.y = Math.atan2(dx, dz); g.add(h); });
+  const TP = addProp('Hafen_Tsingtau', ['kiautschou'], g, () => {});
+  let last = 0, pk = 0; const tq = new THREE.Vector3(), tt = new THREE.Vector3(), cw = new THREE.Vector3();
+  gsap.ticker.add(() => { if (!g.visible || !ships.length) { last = 0; return; } const now = performance.now() / 1000, dt = last ? Math.min(.1, now - last) : 0; last = now;
+    ships.forEach(S => { const sp = .055 / LL, u = (now * sp + S.ph) % 1; loop.getPointAt(u, tq); loop.getTangentAt(u, tt); S.o.position.set(tq.x, .0 + .003 * Math.sin(now * 1.3 + S.ph * 9), tq.z); S.o.rotation.set(0, Math.atan2(-tt.z, tt.x), .02 * Math.sin(now * .9 + S.ph * 7));
+      S.e -= dt * 1.6; if (S.e <= 0) { S.e = 1; const q = puffs[pk++ % puffs.length]; S.o.updateMatrixWorld(); cw.copy(S.f).applyMatrix4(S.o.matrixWorld); q.x = cw.x; q.y = cw.y; q.z = cw.z; q.t = 0; q.s.visible = true; } });
+    puffs.forEach(q => { if (q.t >= 2.4) { q.s.visible = false; return; } q.t += dt; const k = q.t / 2.4; q.s.position.set(q.x - .05 * k, q.y + .09 * Math.pow(k, .7), q.z + .03 * k); q.s.scale.setScalar(.025 + .08 * Math.pow(k, .6)); q.s.material.opacity = .65 * Math.min(1, q.t / .2) * Math.pow(1 - k, 1.4); });
+    markDirty(); });
+  DIO.ts = { g, TP, loop, ships };
+})();
+/* (3) DOA – p115 : chaque objet posé sur la surface VISIBLE (rayon vertical contre le territoire extrudé, recalculé pendant son animation) */
+(() => { const g = new THREE.Group(), R = () => RAILS[1], rnd = (() => { let s = 7; return () => (s = (s * 16807) % 2147483647) / 2147483647; })(), items = [];
+  const farRail = (x, z, d) => { const r = R(); if (!r) return true; for (let i = 0; i <= 80; i++) { const q = r.curve.getPointAt(i / 80); if (Math.hypot(q.x - x, q.z - z) < d) return false; } return true; };
+  const LBL = [W.pts.doa, W.pts.dar].map(q => mapPt(q[0], q[1])), EL = llW(36.0, -9.6);
+  const spots = (n, lon0, lon1, lat0, lat1, d) => { const out = []; for (let t = 0; t < 600 && out.length < n; t++) { const p = llW(lon0 + rnd() * (lon1 - lon0), lat0 + rnd() * (lat1 - lat0)); if (isLand(p.x, p.z) && farRail(p.x, p.z, d) && LBL.every(q => Math.hypot(q.x - p.x, q.z - p.z) > .4) && out.every(q => Math.hypot(q.x - p.x, q.z - p.z) > .4)) out.push(p); } return out; };
+  const put = (w, b, x, z, ry, sc) => { const c = w.clone(true), h = new THREE.Group(); c.position.y = -b.min.y; h.add(c); h.position.set(x, groundAt(x, z, .05, .05).y, z); h.userData.gy = h.position.y; h.rotation.y = ry; h.scale.setScalar(sc); h.userData.sy = sc; g.add(h); items.push(h); lastS = -1; };
+  dioLoad('doa_acacia', { H: .27, env: .4 }, w => { const { b } = dioSize(w);
+    /* p116 : feuillage plus dense – 2 copies des branches feuillues, tournées autour du tronc et légèrement décalées ; alpha-test (pas de mélange) */
+    { const ctr = w.worldToLocal(b.getCenter(new THREE.Vector3()).setY(b.min.y)), br = []; w.traverse(m => { if (m.isMesh && /branch/i.test(m.name)) br.push(m); });
+      br.forEach(m => [].concat(m.material).forEach(M => { if (!M.alphaTest) M.alphaTest = .5; M.transparent = false; M.depthWrite = true; }));
+      [[.95, .93, 1.05], [2.3, .88, .97]].forEach(([ry, sh, sv]) => { const pv = new THREE.Group(); pv.position.copy(ctr); w.add(pv); pv.updateMatrixWorld(true);
+        br.forEach(m => { const c = m.clone(); m.parent.add(c); pv.attach(c); }); pv.rotation.y = ry; pv.scale.set(sh, sv, sh); }); } spots(7, 31.8, 38.0, -9.3, -3.6, .36).filter(p => Math.hypot(p.x - EL.x, p.z - EL.z) > .5).forEach(p => put(w, b, p.x, p.z, rnd() * 6.28, .85 + rnd() * .3)); });
+  dioLoad('doa_elephant', { L: .3, env: .4 }, w => { const { b } = dioSize(w); const c0 = EL; [[0, 0, 0, 1], [.24, .1, .4, 1], [-.18, .2, -.3, .7]].forEach(([ox, oz, ry, sc]) => put(w, b, c0.x + ox, c0.z + oz, 1.2 + ry, sc)); });
+  const SP = addProp('Savanne_DOA', ['doa'], g, (P, p) => { const e = THREE.MathUtils.clamp(p, 0, 1), s = 1 - Math.pow(1 - e, 3); g.children.forEach(o => o.scale.y = Math.max(s, .001) * (o.userData.sy || 1)); });
+  const rc = new THREE.Raycaster(), hitY = (m, x, z, fb) => { rc.ray.origin.set(x, 60, z); rc.ray.direction.set(0, -1, 0); const H = m ? rc.intersectObject(m, false) : []; return H.length ? H[0].point.y : fb; };
+  let lastS = -1; const settle = () => { const m = TERR.doa, on = m && m.isMesh && m.visible, s = on ? m.scale.y : 0; if (Math.abs(s - lastS) < 1e-5) return; lastS = s; if (on) m.updateMatrixWorld(true);
+    items.forEach(h => { h.position.y = hitY(on ? m : null, h.position.x, h.position.z, h.userData.gy) - .002; }); markDirty(); };
+  gsap.ticker.add(() => { if (g.visible) settle(); else lastS = -1; });
+  DIO.doa = { g, SP, items, hitY };
 })();
 (() => { const g = new THREE.Group(), c = { x: SEXT_AT[0], z: SEXT_AT[1] }, low = Q.mode === 'low', S2 = .5;
   const body = new THREE.Group(); g.add(body);
@@ -6841,7 +6978,7 @@ const WW = (() => {
   function bldReset() { BT = 0; BLD.forEach(B => { B.shot = false; B.burn = undefined; B.fl.concat(B.sm, B.em, [B.gl]).forEach(sp => sp.visible = false); B.mats.forEach(([M, C0]) => M.color.copy(C0)); }); guns.forEach(G => G.force = null); }
   /* p106 : avions 1914–1918 – pistes en herbe derrière ses propres lignes, roulage + décollage, orbites au-dessus des lignes ENNEMIES, petites bombes.
      Modèles : Nieuport 17.C1 (FR) et Fokker Dr.I (DE) de KojfDiscord (CC BY 4.0). Tout est pré-alloué (pas d'allocation par image). */
-  const PL_K = .042, PL_G = 1.6;                       // échelle (unités monde / m d'envergure réelle) ; gravité des bombes
+  const PL_K = .063, PL_G = 1.6;                       // échelle (unités monde / m d'envergure réelle) ; gravité des bombes
   const lineOf = sd => { const [a, b, c, d] = TRENCH[sd], p = llW(a, b), q = llW(c, d); return { x: p.x, z: p.z, dx: q.x - p.x, dz: q.z - p.z, L: Math.hypot(q.x - p.x, q.z - p.z) }; };
   const sideDist = (Ln, x, z) => (Ln.dx * (z - Ln.z) - Ln.dz * (x - Ln.x)) / Ln.L;
   /* zone ennemie = côté de la tranchée ennemie opposé à la nation qui largue (repère : un point bien à l'intérieur du pays ennemi) */
@@ -6860,23 +6997,23 @@ const WW = (() => {
   const BOMB_G = new THREE.CylinderGeometry(.006, .004, .03, 7), BOMB_M = std(0x22211F, .55, .4), bQ = new THREE.Quaternion(), bU = new THREE.Vector3(0, 1, 0), bV = new THREE.Vector3();
   STRIPS.forEach(([sd, mdl, lo0, la0, lo1, la1, n, oc], si) => { const a = llW(lo0, la0), b = llW(lo1, la1), dx = b.x - a.x, dz = b.z - a.z, L = Math.hypot(dx, dz), ux = dx / L, uz = dz / L;
     let y0 = -1e9; for (let k = 0; k <= 12; k++) for (const o of [-.06, 0, .06]) y0 = Math.max(y0, relief(a.x + dx * k / 12 - uz * o, a.z + dz * k / 12 + ux * o)); y0 += .003;
-    const st = new THREE.Mesh(new THREE.PlaneGeometry(L * 1.08, .13), stripM); st.rotation.set(-Math.PI / 2, 0, Math.atan2(-dz, dx), 'YXZ'); st.rotation.order = 'YXZ'; st.rotation.y = Math.atan2(-dz, dx); st.rotation.x = -Math.PI / 2; st.rotation.z = 0;
+    const st = new THREE.Mesh(new THREE.PlaneGeometry(L * 1.08, .19), stripM); st.rotation.set(-Math.PI / 2, 0, Math.atan2(-dz, dx), 'YXZ'); st.rotation.order = 'YXZ'; st.rotation.y = Math.atan2(-dz, dx); st.rotation.x = -Math.PI / 2; st.rotation.z = 0;
     st.position.set((a.x + b.x) / 2, y0, (a.z + b.z) / 2); st.receiveShadow = true; st.userData.s = 1; st.name = 'WW1_strip_' + sd; g.add(st);
     const C = llW(oc[0], oc[1]), yC = relief(C.x, C.z);
     for (let i = 0; i < n; i++) { const o = new THREE.Group(); o.rotation.order = 'YXZ'; o.userData.s = 1; o.visible = false; g.add(o);
       const bomb = new THREE.Mesh(BOMB_G, BOMB_M); bomb.visible = false; bomb.castShadow = true; bomb.userData.fx = true; g.add(bomb);
       const E = { ifl: new THREE.Sprite(HOT.clone()), igl: new THREE.Sprite(GLOW.clone()), sm: new THREE.Sprite(SMOKE.clone()), db: new THREE.InstancedMesh(DEB_G, DEB_M, DEB_N), dv: new Float32Array(DEB_N * 6), b: new THREE.Vector3(), it: undefined };
       [E.ifl, E.igl, E.sm].forEach(s => { s.visible = false; g.add(s); }); E.db.visible = false; E.db.frustumCulled = false; E.db.castShadow = true; E.db.userData.fx = true; for (let j = 0; j < DEB_N; j++) E.db.setMatrixAt(j, d0); g.add(E.db);
-      const R = .3, s0 = .08;
-      PLANES.push({ sd, mdl, o, bomb, E, i, ax: a.x, az: a.z, ux, uz, y0, L, s0, cx: C.x + (i - (n - 1) / 2) * .16 * uz, cz: C.z - (i - (n - 1) / 2) * .16 * ux, R, alt: yC + .42 + .07 * i, cw: (si + i) % 2 ? 1 : -1,
-        delay: .4 + si * .7 + Math.random() * .5, v: .35 + .015 * si, yC, tx: b.x, tz: b.z, ok: false }); } });
+      const R = .3, s0 = .2, SEC = [[0, .5], [.5, 1], [.1, .9], [.35, .9]][si], BAND = [.36, .52, .68, .46][si];   /* p108 : secteur et couche d'altitude propres à chaque avion */
+      PLANES.push({ id: PLANES.length, dy: 0, sd, mdl, o, bomb, E, i, ax: a.x, az: a.z, ux, uz, y0, L, s0, cx: C.x + (i - (n - 1) / 2) * .16 * uz, cz: C.z - (i - (n - 1) / 2) * .16 * ux, R, alt: yC + .42 + .07 * i, cw: (si + i) % 2 ? 1 : -1,
+        delay: .4 + si * .7 + Math.random() * .5, v: .35 + .015 * si, yC, tx: si % 2 === 0 ? a.x : b.x, tz: si % 2 === 0 ? a.z : b.z, lx: si % 2 === 0 ? -ux : ux, lz: si % 2 === 0 ? -uz : uz, fd: [.8, 1, .6, 1][si], sec: SEC, band: yC + BAND, ok: false }); } });
   ['nieuport', 'fokker'].forEach(mdl => realOnce('pl_' + mdl).then(sc => { const span = mdl === 'fokker' ? 7.19 : 8.17, w = fitModel(sc, { L: span * PL_K, env: .55 });
     const bad = []; w.traverse(m => { if (m.isMesh && (m.geometry.attributes.position.count <= 3 || m.geometry.attributes.position.array.some(Number.isNaN))) bad.push(m); }); bad.forEach(m => m.parent.remove(m));
     w.traverse(m => { if (!m.isMesh) return; m.castShadow = true; m.receiveShadow = false; [].concat(m.material).forEach(M => { M.transparent = false; M.alphaTest = .5; M.depthWrite = true; M.needsUpdate = true; }); });
     PLANES.filter(P => P.mdl === mdl).forEach(P => { P.o.add(P === PLANES.find(Q => Q.mdl === mdl) ? w : w.clone()); P.ok = true; plReset1(P); }); markDirty(); }).catch(e => console.info('[ww1] avion', mdl, e && e.message)));
-  function plReset1(P) { P.ph = 0; P.t = 0; P.s = P.s0; P.sp = 0; P.x = P.ax + P.ux * P.s; P.z = P.az + P.uz * P.s; P.y = P.y0; P.hd = Math.atan2(P.ux, P.uz); P.vy = 0; P.bank = 0; P.pitch = 0; P.bt = 2.5 + Math.random() * 2.5; P.bf = false; P.wt = P.delay; P.tr = 0; P.vt = P.v;
+  function plReset1(P) { P.ph = 0; P.t = 0; P.s = P.s0; P.sp = 0; P.x = P.ax + P.ux * P.s; P.z = P.az + P.uz * P.s; P.y = P.y0; P.hd = Math.atan2(P.ux, P.uz); P.vy = 0; P.bank = 0; P.pitch = 0; P.bt = 2.5 + Math.random() * 2.5; P.bf = false; P.dy = 0; P.wt = P.delay; P.tr = 0; P.vt = P.v;
     P.o.position.set(P.x, P.y, P.z); P.o.rotation.set(0, P.hd, 0); P.o.visible = P.ok; P.bomb.visible = false; const E = P.E; E.it = undefined; E.ifl.visible = E.igl.visible = E.sm.visible = E.db.visible = false; }
-  function boom(E, x, y, z) { E.b.set(x, y, z); E.it = 0; E.ifl.visible = true; E.ifl.position.set(x, y + .015, z); E.sm.visible = true; E.sm.position.copy(E.b); E.db.visible = true;
+  function boom(E, x, y, z) { crater(x, z, .06); E.b.set(x, y, z); E.it = 0; E.ifl.visible = true; E.ifl.position.set(x, y + .015, z); E.sm.visible = true; E.sm.position.copy(E.b); E.db.visible = true;
     for (let j = 0; j < DEB_N; j++) { const a = Math.random() * Math.PI * 2, r = .2 + Math.random() * .35; E.dv[6 * j] = Math.cos(a) * r; E.dv[6 * j + 1] = .6 + Math.random() * .5; E.dv[6 * j + 2] = Math.sin(a) * r; E.dv[6 * j + 3] = Math.random() * 6; E.dv[6 * j + 4] = Math.random() * 6; E.dv[6 * j + 5] = .6 + Math.random() * .8; } }
   function boomTick(E, dt) { if (E.it === undefined || E.it >= 1.5) return; E.it += dt; const t = E.it, B = E.b;   /* mêmes paramètres que l'impact d'obus (p100/p104) */
     if (E.ifl.visible) { const k = t / .5; E.ifl.scale.setScalar(.2 + .55 * Math.pow(Math.min(1, k), .45)); E.ifl.position.y = B.y + .04 + .1 * k; E.ifl.material.opacity = Math.max(0, 1 - k * k); E.igl.visible = true; E.igl.position.set(B.x, B.y + .03, B.z); E.igl.scale.setScalar(.9 * (1 - .4 * k)); E.igl.material.opacity = Math.max(0, 1 - k); if (k >= 1) E.ifl.visible = E.igl.visible = false; }
@@ -6889,52 +7026,172 @@ const WW = (() => {
   /* p107 : plan de vol varié – sortie = suite de points tirés au hasard au-dessus des lignes ennemies (rayon de virage, altitude et vitesse variables),
      puis retour, approche dans l'axe (depuis le côté du front), arrondi, toucher, roulage jusqu'à l'arrêt, pause, nouveau décollage (sens inverse). */
   const rnd = (a, b) => a + Math.random() * (b - a);
-  function pickWP(P) { const E = ENEMY[P.sd], Ln = E.ln, t = P.sd === 'de' ? rnd(.35, .9) : rnd(.12, .88), off = rnd(.1, .55) * E.sg;
-    P.wx = Ln.x + Ln.dx * t - Ln.dz / Ln.L * off; P.wz = Ln.z + Ln.dz * t + Ln.dx / Ln.L * off; P.wy = P.yC + rnd(.3, .58); P.tmax = rnd(.55, 1.5); P.vt = rnd(.32, .42); }
-  function steer(P, tx, tz, tmax, dt) { const want = Math.atan2(tx - P.x, tz - P.z), turn = THREE.MathUtils.clamp(wrap(want - P.hd) * 1.8, -tmax, tmax);
+  /* p108 : longues branches – point suivant tiré dans le secteur de l'avion, à 0,8–1,8 devant lui (±70°), virages larges (0,3–0,55 rad/s) */
+  function pickWP(P) { const E = ENEMY[P.sd], Ln = E.ln; let bx = 0, bz = 0, bs = -1e9;
+    for (let k = 0; k < 16; k++) { const t = rnd(P.sec[0], P.sec[1]), off = rnd(.15, .7) * E.sg, x = Ln.x + Ln.dx * t - Ln.dz / Ln.L * off, z = Ln.z + Ln.dz * t + Ln.dx / Ln.L * off,
+        d = Math.hypot(x - P.x, z - P.z), ang = Math.abs(wrap(Math.atan2(x - P.x, z - P.z) - P.hd)), sc = (d > .8 && d < 1.8 && ang < 1.2 ? 10 : 0) - Math.abs(d - 1.2) - ang * .6;
+      if (sc > bs) { bs = sc; bx = x; bz = z; } }
+    P.wx = bx; P.wz = bz; P.wy = P.band + rnd(-.03, .03); P.tmax = rnd(.3, .55); P.vt = rnd(.34, .4); }
+  /* p108 : évitement – répulsion horizontale des autres avions en vol à moins de 0,9 (sauf en finale) */
+  function steer(P, tx, tz, tmax, dt, av) { let dx = tx - P.x, dz = tz - P.z; const dl = Math.hypot(dx, dz) || 1; dx /= dl; dz /= dl;
+    let dyT = 0; if (av) for (let k = 0; k < PLANES.length; k++) { const Q = PLANES[k]; if (Q === P || Q.ph < 2) continue; const rx = P.x - Q.x, rz = P.z - Q.z, d = Math.hypot(rx, rz) || 1e-3;
+      if (d < 1.3) { const f = 4 * (1.3 - d) / 1.3; dx += rx / d * f; dz += rz / d * f; if (d < .95) tmax = Math.max(tmax, 1.05); }
+      if (d < 1.1 && (Q.ph === 4 || Q.id < P.id)) dyT = Math.max(dyT, .3 * Math.min(1, (1.1 - d) / .35)); }
+    if (av) for (let k = 0; k < BALS.length; k++) { const B = BALS[k], rx = P.x - B.x, rz = P.z - B.z, d = Math.hypot(rx, rz) || 1e-3; if (d < .6) { const f = 5 * (.6 - d); dx += rx / d * f; dz += rz / d * f; } }   // p110 : contourner les ballons captifs   // couche d'altitude : l'avion de rang inférieur passe au-dessus
+    P.dy += (dyT - P.dy) * Math.min(1, dt * 2.5);
+    const want = Math.atan2(dx, dz), turn = THREE.MathUtils.clamp(wrap(want - P.hd) * 1.8, -tmax, tmax);
     P.tr += (turn - P.tr) * Math.min(1, dt * 2.2); P.hd = wrap(P.hd + P.tr * dt); }
   function fly(P, dt, yT, vmax) { P.sp += (P.vt - P.sp) * Math.min(1, dt * .8); P.x += Math.sin(P.hd) * P.sp * dt; P.z += Math.cos(P.hd) * P.sp * dt;
-    const vyT = THREE.MathUtils.clamp((yT - P.y) * .9, -vmax, .14); P.vy += (vyT - P.vy) * Math.min(1, dt * 1.5); P.y += P.vy * dt;
+    const vyT = THREE.MathUtils.clamp((yT - P.y) * 1.1, -vmax, .2); P.vy += (vyT - P.vy) * Math.min(1, dt * 1.5); P.y += P.vy * dt;
     P.pitch += (Math.atan2(P.vy, P.sp) - P.pitch) * Math.min(1, dt * 3); P.bank += (-P.tr * .45 - P.bank) * Math.min(1, dt * 2.5); }
   function planeTick(dt) { PLANES.forEach(P => { if (!P.ok) return; P.t += dt; boomTick(P.E, dt);
     if (P.ph === 0) { P.wt -= dt; if (P.wt <= 0) { P.ph = 1; P.sp = 0; } }                                   // garé (pause)
     else if (P.ph === 1) { P.sp = Math.min(P.v, P.sp + .42 * dt); P.x += Math.sin(P.hd) * P.sp * dt; P.z += Math.cos(P.hd) * P.sp * dt;   // roulage au décollage
       const lift = Math.max(0, P.sp - P.v * .72) / (P.v * .28); P.vy = .2 * lift * lift; P.y += P.vy * dt; P.pitch += ((.05 + .22 * lift) - P.pitch) * Math.min(1, dt * 4);
-      if (P.y > P.y0 + .06) { P.ph = 2; P.vt = P.v; P.tr = 0; P.st = rnd(13, 22); P.nw = 0; pickWP(P); } }
-    else if (P.ph === 2) { P.st -= dt; steer(P, P.wx, P.wz, P.tmax, dt); fly(P, dt, P.wy, .1);                 // sortie
-      if (Math.hypot(P.wx - P.x, P.wz - P.z) < .18) { P.nw++; pickWP(P); }
+      if (P.y > P.y0 + .06) { P.ph = 2; P.vt = P.v; P.tr = 0; P.st = rnd(18, 28); P.nw = 0; pickWP(P); } }
+    else if (P.ph === 2) { P.st -= dt; steer(P, P.wx, P.wz, P.tmax, dt, true); fly(P, dt, P.wy + P.dy, .1);                 // sortie
+      { const d = Math.hypot(P.wx - P.x, P.wz - P.z), ang = Math.abs(wrap(Math.atan2(P.wx - P.x, P.wz - P.z) - P.hd)); if (d < .45 || (d < 1.3 && ang > 1.6)) { P.nw++; pickWP(P); } }   // atteint ou dépassé → branche suivante (jamais de cercle serré autour d'un point)
       if (P.st <= 0 && !P.bf) { P.ph = 3; P.vt = .34; }
       if (!P.bf && (P.bt -= dt) <= 0) { const vx = Math.sin(P.hd) * P.sp, vz = Math.cos(P.hd) * P.sp, h0 = P.y - .02, tf0 = Math.sqrt(2 * Math.max(.05, h0 - relief(P.x, P.z)) / PL_G), ix = P.x + vx * tf0, iz = P.z + vz * tf0;
         if (enemyOK(P.sd, ix, iz)) { const iy = relief(ix, iz) + .004, tf = Math.sqrt(2 * Math.max(.05, h0 - iy) / PL_G);
           P.bf = true; P.bx = P.x; P.by = h0; P.bz = P.z; P.bvx = vx; P.bvz = vz; P.bT = 0; P.bTf = tf; P.biy = iy; P.ix = P.x + vx * tf; P.iz = P.z + vz * tf; P.bomb.visible = true; } else P.bt = .25; } }
-    else if (P.ph === 3) { const fx = P.tx + P.ux * .95, fz = P.tz + P.uz * .95; steer(P, fx, fz, 1.1, dt); fly(P, dt, P.y0 + .22, .1);   // retour vers le point d'approche (rayon d'arrivée > rayon de virage)
-      if (Math.hypot(fx - P.x, fz - P.z) < .36) { P.ph = 4; P.vt = .28; } }
-    else if (P.ph === 4) { const rx = P.x - P.tx, rz = P.z - P.tz, a = -(rx * P.ux + rz * P.uz), c = rx * P.uz - rz * P.ux;   // finale : a = distance passée le seuil, c = écart latéral
-      steer(P, P.tx - P.ux * (a + .38), P.tz - P.uz * (a + .38), 1.2, dt);
-      const yT = P.y0 + .22 * THREE.MathUtils.clamp(-(a + .06) / .89, 0, 1), h = P.y - P.y0;
+    else if (P.ph === 3) { const fx = P.tx + P.lx * P.fd, fz = P.tz + P.lz * P.fd; steer(P, fx, fz, .8, dt, true); fly(P, dt, P.y0 + .24 + P.dy, .1);   // retour vers le point d'approche (rayon d'arrivée > rayon de virage)
+      if (Math.hypot(fx - P.x, fz - P.z) < .5) { P.ph = 4; P.vt = .28; } }
+    else if (P.ph === 4) { const rx = P.x - P.tx, rz = P.z - P.tz, a = -(rx * P.lx + rz * P.lz), c = rx * P.lz - rz * P.lx;   // finale : a = distance passée le seuil, c = écart latéral
+      steer(P, P.tx - P.lx * (a + .38), P.tz - P.lz * (a + .38), 1.2, dt);
+      const yT = P.y0 + .24 * THREE.MathUtils.clamp(-(a + .06) / 1.0, 0, 1), h = P.y - P.y0;
       fly(P, dt, h < .03 ? P.y0 - .1 : yT, h < .03 ? .055 : .16); if (h < .035) P.pitch += (.07 - P.pitch) * Math.min(1, dt * 3);   // arrondi
       if (P.y <= P.y0) { P.y = P.y0; P.vy = 0; P.ph = 5; }
       else if (a > .34 || (a > -.2 && Math.abs(c) > .09)) { P.ph = 3; P.vt = .36; P.dbg = [+a.toFixed(2), +c.toFixed(2), +h.toFixed(3), +P.sp.toFixed(2)]; } }   // remise des gaz
     else if (P.ph === 5) { P.sp = Math.max(0, P.sp - .3 * dt); P.x += Math.sin(P.hd) * P.sp * dt; P.z += Math.cos(P.hd) * P.sp * dt; P.y = P.y0;   // roulage à l'atterrissage
-      P.tr = 0; P.hd = wrap(P.hd + wrap(Math.atan2(-P.ux, -P.uz) - P.hd) * Math.min(1, dt * 2)); P.pitch += (0 - P.pitch) * Math.min(1, dt * 3); P.bank += (0 - P.bank) * Math.min(1, dt * 4);
-      if (P.sp <= 0) { P.ph = 0; P.wt = rnd(2.5, 5); P.vt = P.v; const s = (P.x - P.ax) * P.ux + (P.z - P.az) * P.uz;   // pause ; demi-tour au sol si la piste restante est trop courte
-        if (s < .32) P.hd = Math.atan2(P.ux, P.uz); } }
+      P.tr = 0; P.hd = wrap(P.hd + wrap(Math.atan2(-P.lx, -P.lz) - P.hd) * Math.min(1, dt * 2)); P.pitch += (0 - P.pitch) * Math.min(1, dt * 3); P.bank += (0 - P.bank) * Math.min(1, dt * 4);
+      if (P.sp <= 0) { P.ph = 0; P.wt = rnd(2.5, 5); P.vt = P.v; const s = (P.x - P.ax) * P.lx + (P.z - P.az) * P.lz;   // pause ; demi-tour au sol si la piste restante est trop courte
+        if (s < .32) P.hd = Math.atan2(P.lx, P.lz); } }
     if (P.bf) { P.bT += dt; const t = Math.min(P.bT, P.bTf), vy = -PL_G * t; P.bomb.position.set(P.bx + P.bvx * t, P.by - .5 * PL_G * t * t, P.bz + P.bvz * t);
       bV.set(P.bvx, vy, P.bvz).normalize(); P.bomb.quaternion.setFromUnitVectors(bU, bV.negate());
       if (P.bT >= P.bTf) { P.bf = false; P.bomb.visible = false; boom(P.E, P.ix, P.biy, P.iz); P.nb = (P.nb || 0) + 1; P.bt = rnd(2.2, 4.5); } }
     P.o.position.set(P.x, P.y, P.z); P.o.rotation.set(-P.pitch, P.hd, P.bank); }); }
   const enemyDbg = P => +(sideDist(ENEMY[P.sd].ln, P.x, P.z) * ENEMY[P.sd].sg).toFixed(2); WW_PLDBG = enemyDbg;
   function planeReset() { PLANES.forEach(P => { if (P.ok) plReset1(P); P.nb = 0; }); }
+  /* ============ p110 : front 1914–1918 – ballons captifs, canons antiaériens, train de ravitaillement, cratères, fusées éclairantes ============
+     Modèles : „Caquot Observation Balloon“ (Romania 100 – Marea Unire), „Thornycroft QF 13 Pounder Gun“ (ivanfreitas777), „LMS Fowler 4F“ (Steve Emfore), CC BY.
+     Tout est créé une fois (réserves), aucune allocation par image. */
+  const xV = new THREE.Vector3(), xW = new THREE.Vector3(), xQ = new THREE.Quaternion(), UPY = new THREE.Vector3(0, 1, 0);
+  /* --- cratères : InstancedMesh (40 fixes dans le no man's land + 48 en anneau pour chaque impact) --- */
+  const CR_M = new THREE.MeshStandardMaterial({ map: (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'), r = x.createRadialGradient(32, 32, 0, 32, 32, 32);
+      r.addColorStop(0, 'rgba(24,19,14,.98)'); r.addColorStop(.42, 'rgba(46,36,26,.95)'); r.addColorStop(.66, 'rgba(150,132,106,.9)'); r.addColorStop(.84, 'rgba(110,96,78,.5)'); r.addColorStop(1, 'rgba(90,80,64,0)'); x.fillStyle = r; x.fillRect(0, 0, 64, 64);
+      const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; })(), transparent: true, depthWrite: false, roughness: 1, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 });
+  const CR_G = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), CR_FIX = 40, CR_DYN = 48, CR = new THREE.InstancedMesh(CR_G, CR_M, CR_FIX + CR_DYN); CR.receiveShadow = true; CR.frustumCulled = false; CR.userData.fx = true; CR.renderOrder = 1; g.add(CR);
+  let crK = 0; const crSet = (i, x, z, r) => { CR.setMatrixAt(i, dM4.compose(dT.set(x, relief(x, z) + .004, z), dQ.setFromEuler(dE.set(0, Math.random() * 6.28, 0)), dS.set(r, 1, r * (.85 + Math.random() * .3)))); CR.instanceMatrix.needsUpdate = true; };
+  function crater(x, z, r = .085) { crSet(CR_FIX + (crK++ % CR_DYN), x, z, r * (.8 + Math.random() * .5)); }
+  function crReset() { crK = 0; for (let i = CR_FIX; i < CR_FIX + CR_DYN; i++) CR.setMatrixAt(i, d0); CR.instanceMatrix.needsUpdate = true; }
+  { const A = lineOf('fr'), B = lineOf('dw'), C = lineOf('de'), D = lineOf('ru');
+    for (let i = 0; i < CR_FIX; i++) { const [P, Q] = i < 26 ? [A, B] : [C, D], t = Math.random(), m = .2 + Math.random() * .6;
+      crSet(i, (P.x + P.dx * t) * (1 - m) + (Q.x + Q.dx * t) * m, (P.z + P.dz * t) * (1 - m) + (Q.z + Q.dz * t) * m, .065 + Math.random() * .07); } crReset(); }
+  /* --- fusées éclairantes : montée balistique, parachute (descente lente, balancement), éclat + halo + lueur au sol --- */
+  const GG_G = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
+  const FLARES = Array.from({ length: 4 }, () => { const F = { c: new THREE.Sprite(HOT.clone()), h: new THREE.Sprite(GLOW.clone()), gg: new THREE.Mesh(GG_G, new THREE.MeshBasicMaterial({ map: GLOW.map, color: 0xFFE2A8, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0 })), t: -1, x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, y0: 0 };
+    [F.c, F.h, F.gg].forEach(s => { s.visible = false; g.add(s); }); return F; });
+  let flT = 1.5;
+  function flTick(dt) { flT -= dt; if (flT <= 0) { flT = 2.5 + Math.random() * 3.5; const F = FLARES.find(F => F.t < 0); if (F) { const sds = ['fr', 'dw', 'de', 'ru'], Ln = lineOf(sds[Math.floor(Math.random() * 4)]), t = .1 + Math.random() * .8;
+        F.x = Ln.x + Ln.dx * t; F.z = Ln.z + Ln.dz * t; F.y0 = relief(F.x, F.z); F.y = F.y0 + .02; F.vx = (Math.random() - .5) * .12; F.vz = (Math.random() - .5) * .12; F.vy = .85 + Math.random() * .2; F.t = 0; F.c.visible = F.h.visible = F.gg.visible = true; } }
+    FLARES.forEach(F => { if (F.t < 0) return; F.t += dt; const up = F.vy > 0; if (up) { F.vy -= 1.6 * dt; F.y += F.vy * dt; } else { F.y -= .045 * dt; }
+      F.x += F.vx * dt * (up ? 1 : .35) + Math.sin(F.t * 2.1) * .006 * dt; F.z += F.vz * dt * (up ? 1 : .35);
+      const life = 5.5, fade = Math.min(1, F.t / .15) * Math.min(1, Math.max(0, (life - F.t) / .8)), fl = .85 + .15 * Math.sin(F.t * 31) * Math.sin(F.t * 17);
+      F.c.position.set(F.x, F.y, F.z); F.c.scale.setScalar(.045 * fl); F.c.material.opacity = fade; F.h.position.copy(F.c.position); F.h.scale.setScalar(.26 * fl); F.h.material.opacity = .55 * fade;
+      const hh = Math.max(.05, F.y - F.y0); F.gg.position.set(F.x, F.y0 + .01, F.z); F.gg.scale.setScalar(.35 + hh * .8); F.gg.material.opacity = .45 * fade / (1 + hh * 2);
+      if (F.t > life || F.y < F.y0) { F.t = -1; F.c.visible = F.h.visible = F.gg.visible = false; } }); }
+  function flReset() { flT = 1.5; FLARES.forEach(F => { F.t = -1; F.c.visible = F.h.visible = F.gg.visible = false; }); }
+  /* --- ballons captifs (un par camp, derrière ses lignes) : câble + treuil, léger balancement --- */
+  const CABLE_G = new THREE.CylinderGeometry(.0016, .0016, 1, 4).translate(0, .5, 0), CABLE_M = std(0x2A2826, .6, .3);
+  const BALS = [['fr', 2.0, 49.6], ['dw', 9.9, 50.1]].map(([sd, lon, lat], i) => { const B = { sd, o: new THREE.Group(), w: new THREE.Mesh(new THREE.BoxGeometry(.05, .03, .04), WOOD), c: new THREE.Mesh(CABLE_G, CABLE_M), ph: Math.random() * 6, ok: false };
+    const p = ground(B.w, lon, lat); B.w.position.y += .015; B.w.castShadow = true; B.w.userData.s = 1; g.add(B.w); B.x = p.x; B.z = p.z; B.gy = B.w.position.y; B.H = .6 + i * .05; B.o.userData.s = 1; B.o.position.set(p.x, B.gy + B.H, p.z); g.add(B.o);
+    B.c.userData.fx = true; B.c.castShadow = false; g.add(B.c); B.bas = new THREE.Vector3(0, -.12, 0); return B; });
+  realOnce('ww_balloon').then(sc => { const w = fitModel(sc, { L: .42, env: .45 }); const bb = new THREE.Box3().setFromObject(w); w.position.y -= (bb.max.y - bb.min.y) * .5;   // centre du ballon au point d'ancrage
+    w.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = false; } });
+    BALS.forEach((B, i) => { const c = i ? w.clone() : w; B.o.add(c); B.bas.set(0, bb.min.y - (bb.max.y - bb.min.y) * .5 + .01, 0); B.ok = true; }); markDirty(); }).catch(e => console.info('[ww1] ballon', e && e.message));
+  function balTick() { BALS.forEach(B => { const t = TT + B.ph; B.o.position.set(B.x + .03 * Math.sin(t * .31), B.gy + B.H + .025 * Math.sin(t * .53), B.z + .02 * Math.sin(t * .27)); B.o.rotation.set(.03 * Math.sin(t * .7), 2.4 + .18 * Math.sin(t * .19), .04 * Math.sin(t * .61));
+    xV.copy(B.bas).applyQuaternion(B.o.quaternion).add(B.o.position); xW.set(B.x, B.gy, B.z); const L = xV.distanceTo(xW); B.c.position.copy(xW); B.c.quaternion.setFromUnitVectors(UPY, xV.sub(xW).normalize()); B.c.scale.set(1, L, 1); }); }
+  /* --- canons antiaériens sur camion (un par camp) : affût orienté vers l'avion ennemi le plus proche, éclair, éclatements de shrapnel près de la cible --- */
+  const FLAK = new THREE.SpriteMaterial({ map: tex('rgba(40,38,36,.95)', 'rgba(40,38,36,0)'), depthWrite: false, transparent: true });
+  const AAS = [['fr', 2.6, 48.35, 0xB4C0CC], ['dw', 8.3, 48.6, 0xA6AC9E]].map(([sd, lon, lat, tint]) => { const A = { sd, tint, o: new THREE.Group(), ok: false, yaw: 0, pit: .4, t: 1 + Math.random() * 2, fl: new THREE.Sprite(HOT.clone()), ft: 9,
+      bursts: Array.from({ length: 4 }, () => ({ s: new THREE.Sprite(FLAK.clone()), f: new THREE.Sprite(HOT.clone()), t: -1, d: 0, x: 0, y: 0, z: 0 })) };
+    ground(A.o, lon, lat); A.o.userData.s = 1; A.o.rotation.y = sd === 'fr' ? .35 : -2.6; g.add(A.o); A.fl.visible = false; g.add(A.fl); A.bursts.forEach(b => { b.s.visible = b.f.visible = false; g.add(b.s, b.f); }); return A; });
+  realOnce('ww_aagun').then(sc => { const w0 = fitModel(sc, { L: .3, env: .5 });
+    const W2 = AAS.map((A, i) => i ? w0.clone() : w0); AAS.forEach((A, i) => { const w = W2[i]; w.updateMatrixWorld(true);
+      w.traverse(m => { if (!m.isMesh) return; m.castShadow = true; m.material = m.material.clone(); const c = new THREE.Color(A.tint); m.material.color.setRGB(.55 + .7 * c.r, .55 + .7 * c.g, .55 + .7 * c.b); });
+      const by = n => { let r = null; w.traverse(o => { if (!r && o.name && o.name.indexOf(n) >= 0) r = o; }); return r; };
+      const mount = by('horizontal_rotation') || by('horizontal rotation'), cradle = by('Rot_Vertical'), barrel = by('gun_barrel');
+      if (mount && cradle && barrel) { w.updateMatrixWorld(true); const bm = new THREE.Box3().setFromObject(mount), cc = new THREE.Box3().setFromObject(cradle).getCenter(new THREE.Vector3()), tip = new THREE.Vector3(), v = new THREE.Vector3(); let far = -1;
+        barrel.traverse(m => { if (!m.isMesh) return; const P = m.geometry.attributes.position; for (let i = 0; i < P.count; i++) { v.fromBufferAttribute(P, i).applyMatrix4(m.matrixWorld); const d = v.distanceToSquared(cc); if (d > far) { far = d; tip.copy(v); } } });
+        const yp = new THREE.Group(), pa = new THREE.Group(), pp = new THREE.Group(); w.add(yp); yp.position.copy(w.worldToLocal(new THREE.Vector3((bm.min.x + bm.max.x) / 2, bm.min.y, (bm.min.z + bm.max.z) / 2))); yp.updateMatrixWorld(true);
+        const lc = yp.worldToLocal(cc.clone()), lt = yp.worldToLocal(tip.clone()), dv = lt.sub(lc); A.ry = Math.atan2(dv.x, dv.z); A.rp = Math.atan2(dv.y, Math.hypot(dv.x, dv.z));
+        yp.add(pa); pa.position.copy(lc); pa.rotation.y = A.ry; pa.add(pp); yp.updateMatrixWorld(true);
+        yp.attach(mount); pp.attach(cradle); pp.attach(barrel); A.yp = yp; A.pp = pp; A.mz = pp.worldToLocal(tip.clone()); A.yaw = 0; A.pit = A.rp; }
+      A.o.add(w); A.ok = true; }); markDirty(); }).catch(e => console.info('[ww1] flak', e && e.message));
+  function aaTick(dt) { AAS.forEach(A => { if (!A.ok) return;
+      let T = null, td = 2.8; PLANES.forEach(P => { if (P.ph < 2 || P.ph > 4 || P.sd === A.sd || (A.sd === 'dw' && P.sd === 'de') ) return; const d = Math.hypot(P.x - A.o.position.x, P.z - A.o.position.z); if (d < td) { td = d; T = P; } });
+      if (A.yp) { let wy = A.yaw, wp = A.rp; if (T) { A.yp.parent.updateMatrixWorld(); xV.set(T.x, T.y, T.z); A.yp.parent.worldToLocal(xV); xV.sub(A.yp.position); wy = Math.atan2(xV.x, xV.z) - A.ry; wp = THREE.MathUtils.clamp(Math.atan2(xV.y, Math.hypot(xV.x, xV.z)), .1, 1.25); }
+        A.yaw += wrap(wy - A.yaw) * Math.min(1, dt * 1.8); A.pit += (wp - A.pit) * Math.min(1, dt * 1.8); A.yp.rotation.y = A.yaw; A.pp.rotation.x = A.rp - A.pit;
+        A.t -= dt; if (T && A.t <= 0 && Math.abs(wrap(wy - A.yaw)) < .12) { A.t = 1.6 + Math.random() * 1.4; A.pp.updateMatrixWorld(); xW.copy(A.mz).applyMatrix4(A.pp.matrixWorld); A.fl.position.copy(xW); A.fl.visible = true; A.ft = 0;
+          const b = A.bursts.find(b => b.t < 0); if (b) { const a = Math.random() * 6.28, r = .14 + Math.random() * .2; b.x = T.x + Math.cos(a) * r + Math.sin(T.hd) * T.sp * .5; b.z = T.z + Math.sin(a) * r + Math.cos(T.hd) * T.sp * .5; b.y = T.y + (Math.random() - .3) * .12; b.d = .35 + td * .12; b.t = 0; } } }
+      if (A.ft < .12) { A.ft += dt; A.fl.scale.setScalar(.09 * (1 - A.ft / .12) + .03); A.fl.material.opacity = 1 - A.ft / .12; if (A.ft >= .12) A.fl.visible = false; }
+      A.bursts.forEach(b => { if (b.t < 0) return; b.t += dt; const k = b.t - b.d; if (k < 0) return; const u = k / 1.6;
+        b.s.visible = true; b.s.position.set(b.x + .02 * u, b.y + .03 * u, b.z); b.s.scale.setScalar(.04 + .16 * Math.pow(Math.min(1, u), .5)); b.s.material.opacity = .85 * Math.pow(Math.max(0, 1 - u), 1.3);
+        b.f.visible = k < .1; if (b.f.visible) { b.f.position.set(b.x, b.y, b.z); b.f.scale.setScalar(.07); b.f.material.opacity = 1 - k / .1; }
+        if (u >= 1) { b.t = -1; b.s.visible = b.f.visible = false; } }); }); }
+  function aaReset() { AAS.forEach(A => { A.fl.visible = false; A.ft = 9; A.bursts.forEach(b => { b.t = -1; b.s.visible = b.f.visible = false; }); }); }
+  /* --- train de ravitaillement allemand (arrière du front ouest) : voie réelle (ballast, traverses, 2 rails), locomotive + 2 wagons couverts posés sur leurs essieux,
+       navette aller-retour à vitesse lissée (départ / arrêt en douceur), vapeur à la cheminée --- */
+  const TRK = (() => { const ll = [[13.9, 48.85], [12.5, 49.08], [11.25, 49.3], [10.2, 49.18], [9.25, 49.38]], base = new THREE.CatmullRomCurve3(ll.map(q => { const p = llW(q[0], q[1]); return new THREE.Vector3(p.x, 0, p.z); }), false, 'centripetal', .3);
+    const nb = Math.max(24, Math.round(base.getLength() / .04)), curve = new THREE.CatmullRomCurve3(base.getSpacedPoints(nb).map(q => { q.y = .02 + relief(q.x, q.z); return q; }), false, 'catmullrom', .5), L = curve.getLength(), seg = nb * 3, GA = .02;
+    const bal = new THREE.Mesh(new THREE.TubeGeometry(curve, seg, .028, 6, false).translate(0, -.034, 0), std(0x5C564C, 1)); bal.receiveShadow = true; bal.userData.fx = true; g.add(bal);
+    const steel = new THREE.MeshStandardMaterial({ color: 0x55565A, roughness: .35, metalness: .8 }), t0 = new THREE.Vector3();
+    [-1, 1].forEach(sg => { const pts = []; for (let k = 0; k <= seg; k++) { const u = k / seg, q = curve.getPointAt(u); curve.getTangentAt(u, t0); const n = Math.hypot(t0.x, t0.z) || 1; q.x += -t0.z / n * GA * sg; q.z += t0.x / n * GA * sg; q.y = .02 + .004 + relief(q.x, q.z); pts.push(q); }
+      const r = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), seg, .0036, 4, false), steel); r.castShadow = r.receiveShadow = true; r.userData.fx = true; g.add(r); });
+    const nt = Math.floor(L / .04), im = new THREE.InstancedMesh(BOX_GEO, std(0x5E4A36, .9), nt), o = new THREE.Object3D();
+    for (let i = 0; i < nt; i++) { const u = (i + .5) / nt; curve.getPointAt(u, o.position); curve.getTangentAt(u, t0); o.position.y = .016 + relief(o.position.x, o.position.z); o.rotation.set(0, Math.atan2(-t0.z, t0.x), 0); o.scale.set(.012, .007, .07); o.updateMatrix(); im.setMatrixAt(i, o.matrix); }
+    im.receiveShadow = im.castShadow = true; im.userData.fx = true; g.add(im); return { curve, L }; })();
+  const TR = (() => { const loco = new THREE.Group(), WMt = { body: std(0x4B3F33, .85), iron: std(0x26241F, .5, .6), roof: std(0x3E3D3A, .7) };
+    const van = () => { const o = new THREE.Group(), m = (geo, mat, x, y, z) => { const e = new THREE.Mesh(geo, mat); e.position.set(x, y, z); e.castShadow = e.receiveShadow = true; o.add(e); return e; };
+      const wl = new THREE.CylinderGeometry(.012, .012, .006, 12).rotateX(Math.PI / 2); [-.06, .06].forEach(x => [-.02, .02].forEach(z => m(wl, WMt.iron, x, .012, z)));
+      m(new THREE.BoxGeometry(.2, .008, .066), WMt.iron, 0, .026, 0); m(new THREE.BoxGeometry(.19, .062, .064), WMt.body, 0, .061, 0); m(new THREE.BoxGeometry(.198, .007, .072), WMt.roof, 0, .095, 0);
+      m(new THREE.BoxGeometry(.05, .046, .066), std(0x3A3028, .9), 0, .058, 0); o.scale.setScalar(.72); o.userData.L = .144; return o; };
+    const cars = [loco, van(), van()]; loco.userData.L = .3; cars.forEach(c => { c.userData.s = 1; c.visible = false; g.add(c); });
+    const chim = new THREE.Vector3(.12, .08, 0), T = { cars, chim, s: 0, dir: 1, k: 0, wait: 2, ok: false };
+    realOnce('ww_fowler').then(sc => { const w = fitModel(sc, { L: .3, env: .5 }); alignLongX(w, loco); loco.updateMatrixWorld(true); const inv = loco.matrixWorld.clone().invert(), v = new THREE.Vector3(); let top = -1e9;
+      w.traverse(m => { if (!m.isMesh) return; m.castShadow = true; m.receiveShadow = true; const A = m.geometry.attributes.position; for (let i = 0; i < A.count; i += 5) { v.fromBufferAttribute(A, i).applyMatrix4(m.matrixWorld).applyMatrix4(inv); if (v.x > .055 && v.y > top) { top = v.y; chim.copy(v); } } });
+      cars.forEach(c => c.visible = true); T.ok = true; trPlace(); markDirty(); }).catch(e => console.info('[ww1] train', e && e.message));
+    return T; })();
+  const tpA = new THREE.Vector3(), tB2 = new THREE.Vector3();
+  function trPlace() { const { curve, L } = TRK; let s = TR.s;
+    TR.cars.forEach((o, i) => { const h = o.userData.L * .38, sa = Math.min(L, Math.max(0, s + h)), sb = Math.min(L, Math.max(0, s - h));
+      curve.getPointAt(sa / L, tpA); curve.getPointAt(sb / L, tB2); const ya = relief(tpA.x, tpA.z), yb = relief(tB2.x, tB2.z);
+      o.position.set((tpA.x + tB2.x) / 2, (ya + yb) / 2 + .028, (tpA.z + tB2.z) / 2); o.rotation.set(0, Math.atan2(-(tpA.z - tB2.z), tpA.x - tB2.x), Math.atan2(ya - yb, Math.hypot(tpA.x - tB2.x, tpA.z - tB2.z)), 'YZX');
+      if (i < TR.cars.length - 1) s -= o.userData.L / 2 + .014 + TR.cars[i + 1].userData.L / 2; }); }
+  const TR_S0 = .64, TR_RUN = 15, STEAM_M = new THREE.SpriteMaterial({ map: tex('rgba(236,232,224,.85)', 'rgba(225,220,210,0)'), depthWrite: false, transparent: true });
+  const SPUFF = Array.from({ length: 16 }, () => { const s = new THREE.Sprite(STEAM_M.clone()); s.visible = false; g.add(s); return { s, t: 9, x: 0, y: 0, z: 0, dx: 0 }; });
+  let spK = 0, spE = 0, trV = 0;
+  function trainTick(dt) { if (!TR.ok) return; const S1 = TRK.L - .04, s0 = TR.s;
+    if (TR.wait > 0) TR.wait -= dt; else { TR.k = Math.min(1, TR.k + dt / TR_RUN); const e = (1 - Math.cos(Math.PI * TR.k)) / 2; TR.s = TR.dir > 0 ? TR_S0 + (S1 - TR_S0) * e : S1 - (S1 - TR_S0) * e;
+      if (TR.k >= 1) { TR.k = 0; TR.dir = -TR.dir; TR.wait = 4 + Math.random() * 2; } }
+    trPlace(); const v = Math.abs(TR.s - s0) / Math.max(dt, 1e-4); trV += (v - trV) * Math.min(1, dt * 4);
+    spE -= dt * (.9 + trV * 40); if (spE <= 0) { spE = 1; const q = SPUFF[spK++ % SPUFF.length], L0 = TR.cars[0]; L0.updateMatrixWorld(); xW.copy(TR.chim).applyMatrix4(L0.matrixWorld); q.x = xW.x; q.y = xW.y + .004; q.z = xW.z; q.dx = (Math.random() - .5) * .02; q.t = 0; q.s.visible = true; }
+    SPUFF.forEach(q => { if (q.t >= 1.8) { q.s.visible = false; return; } q.t += dt; const k = q.t / 1.8; q.s.position.set(q.x + q.dx * k + .03 * k, q.y + .16 * Math.pow(k, .7), q.z + q.dx * k); q.s.scale.setScalar(.03 + .12 * Math.pow(k, .6)); q.s.material.opacity = .7 * Math.min(1, q.t / .12) * Math.pow(1 - k, 1.5); }); }
+  function trainReset() { TR.s = TR_S0; TR.dir = 1; TR.k = 0; TR.wait = 1.5; trV = 0; SPUFF.forEach(q => { q.t = 9; q.s.visible = false; }); if (TR.ok) trPlace(); }
+  trainReset();
+  function extTick(dt) { flTick(dt); balTick(); aaTick(dt); trainTick(dt); }
+  function extReset() { flReset(); aaReset(); trainReset(); crReset(); }
   const v = new THREE.Vector3(); let on = false, last = 0;
   function tick() { const now = performance.now() / 1000, dt = Math.min(WW_DT.v, now - (last || now)); last = now; TT += dt;
-    bldTick(dt); planeTick(dt);
+    bldTick(dt); planeTick(dt); extTick(dt);
     guns.forEach(G => { G.t -= dt; if (G.t <= 0 && !G.fly) { G.T = G.force ? { o: G.force.g } : target(G.en); const d = G.T.o.position.clone().sub(G.o.position); G.o.rotation.y = Math.atan2(-d.z, d.x); G.o.updateMatrixWorld(true);
         G.a = G.o.localToWorld(G.o.userData.muzzle.clone()); G.b = G.T.o.position.clone().add(V((Math.random() - .5) * .16, 0, (Math.random() - .5) * .16)); G.b.y = relief(G.b.x, G.b.z) + .004; if (G.force) { G.b.copy(G.force.g.position); G.b.y += G.force.H * .6; }
         G.len = G.a.distanceTo(G.b); G.dur = .9 + G.len * .35; G.fly = 0; G.fl.visible = true; G.fl.position.copy(G.a); G.ft = 0; G.sh.visible = true; G.t = 3.2 + Math.random() * 2.6; }
       if (G.ft !== undefined && G.ft < .22) { G.ft += dt; const k = G.ft / .22; G.fl.scale.setScalar(.16 + .2 * Math.sin(Math.PI * Math.min(1, k))); G.fl.material.opacity = 1 - k; if (k >= 1) G.fl.visible = false; }
       if (G.fly !== undefined && G.fly !== false && G.sh.visible) { G.fly += dt / G.dur; const u = Math.min(1, G.fly);
         v.lerpVectors(G.a, G.b, u); v.y += Math.sin(Math.PI * u) * (.2 + G.len * .25); G.sh.position.copy(v); trPush(G.tr, v.x, v.y, v.z, TT);
-        if (u >= 1) { if (G.force) { G.force.burn = 0; G.force = null; } G.sh.visible = false; G.fly = false; G.pf.visible = true; G.pf.position.copy(G.b); G.pt = 0;
+        if (u >= 1) { if (G.force) { G.force.burn = 0; G.force = null; } else crater(G.b.x, G.b.z); G.sh.visible = false; G.fly = false; G.pf.visible = true; G.pf.position.copy(G.b); G.pt = 0;
           G.it = 0; G.ifl.visible = true; G.ifl.position.copy(G.b); G.ifl.position.y += .015; G.sm.visible = true; G.sm.position.copy(G.b); G.db.visible = true;
           for (let j = 0; j < DEB_N; j++) { const a = Math.random() * Math.PI * 2, r = .2 + Math.random() * .35; G.dv[6 * j] = Math.cos(a) * r; G.dv[6 * j + 1] = .6 + Math.random() * .5; G.dv[6 * j + 2] = Math.sin(a) * r; G.dv[6 * j + 3] = Math.random() * 6; G.dv[6 * j + 4] = Math.random() * 6; G.dv[6 * j + 5] = .6 + Math.random() * .8; } } }
       if (G.it !== undefined && G.it < 1.5) { G.it += dt; const t = G.it;
@@ -6948,10 +7205,10 @@ const WW = (() => {
       if (G.tr.k) trDraw(G.tr, TT); });
     markDirty(); }
   function start() { if (on) return; on = true; last = 0; gsap.ticker.add(tick); }
-  function stop() { if (!on) return; on = false; gsap.ticker.remove(tick); bldReset(); planeReset(); guns.forEach(G => { G.fl.visible = G.sh.visible = G.pf.visible = G.ifl.visible = G.igl.visible = G.sm.visible = G.db.visible = false; G.fly = false; G.ft = G.pt = G.it = undefined; G.tr.k = 0; G.tr.m.visible = false; G.tr.geo.setDrawRange(0, 0); }); }
+  function stop() { if (!on) return; on = false; gsap.ticker.remove(tick); bldReset(); planeReset(); extReset(); guns.forEach(G => { G.fl.visible = G.sh.visible = G.pf.visible = G.ifl.visible = G.igl.visible = G.sm.visible = G.db.visible = false; G.fly = false; G.ft = G.pt = G.it = undefined; G.tr.k = 0; G.tr.m.visible = false; G.tr.geo.setDrawRange(0, 0); }); }
   const P = addProp('WW1_Europa', ['ende'], g, (P, p) => { const e = THREE.MathUtils.clamp(p, 0, 1), k = 1 - Math.pow(1 - e, 3);
     g.children.forEach(o => { if (!o.isSprite && o.geometry !== SHELL_G && !o.userData.fx) o.scale.setScalar(Math.max(k, .001) * (o.userData.s || 1)); }); g.visible = e > .005; if (e > .98) start(); else stop(); });
-  return { g, guns, men, BLD, PLANES, start, stop, get on() { return on; }, P };
+  return { g, guns, men, BLD, PLANES, BALS, AAS, TR, TRK, FLARES, start, stop, get on() { return on; }, P };
 })();
 function settleProps() {
   const rc = new THREE.Raycaster(); rc.ray.direction.set(0, -1, 0);
@@ -7535,7 +7792,7 @@ const SLIDES = [
     planes: [{ img: 'stamp-dswa.webp', area: [11, 13, 1, 5], d: 4 }] }),
   colonySlide('neuguinea', { az: 8, el: 52, dist: 10.5, at: cc([5, 11, 1, 8]),
     build(sec) { glass(sec, [10, 13, 8, 13], `<div class="gk">${H(F.bilanz.labels.neuguinea)}</div>${locSVG('pacific', ['neuguinea'], 'map')}`, 'mapcard'); colonyBand(sec, 'neuguinea'); } }),
-  colonySlide('doa', { az: 12, el: 48, dist: 9.2, at: cc([5, 9, 2, 12]),
+  colonySlide('doa', { az: 12, el: 33, dist: 9.2, at: cc([5, 9, 2, 12]),
     planes: [{ img: 'H_DOA', map: true, area: [10, 13, 1, 13], d: 4, align: 'r', card: 'Karte: O. Baumann, Nordöstliches Deutsch-Ostafrika' }] }),
   colonySlide('kiautschou', { az: -6, el: 50, dist: 4.6, at: cc([5, 10, 1, 9]),
     planes: [{ img: 'k-kiau.webp', map: true, area: [10, 13, 1, 8], d: 4, align: 'r', card: 'Karte: Kiautschou und Umgebung (k-kiau.webp)' },
@@ -8397,7 +8654,12 @@ function layoutReport() {
   });
   return { slide: currentSlide, id: S.id, items: items.length, overlaps, bounds, overflow, rects: items.map(({ kind, name, x0, y0, x1, y1 }) => ({ kind, name, r: [x0, y0, x1, y1].map(Math.round) })) };
 }
-window.__deck = { goTo: n => goTo(n), _look: (p, t) => { camera.position.set(p[0], p[1], p[2]); camera.lookAt(t[0], t[1], t[2]); camera.updateMatrixWorld(); markDirty(); }, _nan: () => { const r = []; scene.traverse(m => { if (m.geometry && m.geometry.attributes.position && Array.prototype.some.call(m.geometry.attributes.position.array, Number.isNaN)) r.push([m.name, m.parent && m.parent.name, m.type, m.geometry.attributes.position.count]); }); return r; }, _simT: () => WW.PLANES.length ? WW.PLANES[0].t : 0, _planes: () => WW.PLANES.map(P => [P.sd, P.ph, +P.x.toFixed(3), +P.z.toFixed(3), +(P.y - P.y0).toFixed(3), +P.L.toFixed(3), P.nb || 0, P.ok ? 1 : 0, +P.s.toFixed(3), P.E.it === undefined ? -1 : +P.E.it.toFixed(2), +P.cx.toFixed(2), +P.cz.toFixed(2), +P.bt.toFixed(2), WW_PLDBG(P), P.dbg]), _wwDt: x => { WW_DT.v = x; }, _booksReal: () => BOOK.all.map(b => !!(b.userData.book && b.userData.book.real)), _relief: (x, z) => relief(x, z), _isLand: (x, z) => isLand(x, z), _motion: () => { const B = PROPS.find(P => P.name === 'Bahn_DOA'), lo = B && B.g.children[0]; return { ships: Object.entries(SHIPS).map(([k, S]) => [k, +S.g.position.x.toFixed(4), +S.g.position.z.toFixed(4), +S.g.position.y.toFixed(4), +S.g.rotation.y.toFixed(4), S.g.visible ? 1 : 0, +(S.o * S.v).toFixed(3), +S.u.toFixed(4)]), loco: B ? [B.g.visible ? 1 : 0, +(B.uu || 0).toFixed(4), lo ? +lo.rotation.y.toFixed(4) : 0, lo ? +lo.position.x.toFixed(4) : 0, lo ? +lo.position.z.toFixed(4) : 0, lo ? +(lo.position.y - relief(lo.position.x, lo.position.z)).toFixed(4) : 0, lo && lo.visible ? 1 : 0] : null }; }, _rotProp: (n, r) => { const o = scene.getObjectByName(n); if (!o) return null; o.rotation.y = r; markDirty(); return true; }, _cam: () => camera.position.toArray(), _probe: (pts, R = .3) => { const rc = new THREE.Raycaster(), pl = new THREE.Plane(new THREE.Vector3(0, 1, 0), -.05), v = new THREE.Vector3(); return pts.map(([sx, sy]) => { rc.setFromCamera(new THREE.Vector2(sx / innerWidth * 2 - 1, 1 - sy / innerHeight * 2), camera); if (!rc.ray.intersectPlane(pl, v)) return null; const x = +v.x.toFixed(2), z = +v.z.toFixed(2), fr = footRelief(x, z, R, R); let terr = null; const r2 = new THREE.Raycaster(); r2.ray.direction.set(0, -1, 0); Object.entries(TERR).forEach(([id, m]) => { if (!m.isMesh) return; const vis = m.visible, sy0 = m.scale.y; m.visible = true; m.scale.y = 1; m.updateMatrixWorld(true); for (const [dx, dz] of [[0, 0], [R, 0], [-R, 0], [0, R], [0, -R]]) { r2.ray.origin.set(x + dx, 30, z + dz); if (r2.intersectObject(m, false).length) terr = id; } m.visible = vis; m.scale.y = sy0; m.updateMatrixWorld(true); }); return [sx, sy, x, z, isLand(x, z), terr, +(fr.max - fr.min).toFixed(3)]; }); }, _bookS: () => { const S = BOOK.split; if (!S) return null; const g = BOOK.tpl.geometry; g.computeBoundingBox(); const P = g.attributes.position, I = S.cover.index.array, ys = []; for (let t = 0; t < I.length; t++) ys.push(P.getY(I[t])); ys.sort((a, b) => a - b); const q = f => +ys[Math.floor(f * (ys.length - 1))].toFixed(4); return { T: S.T, ycb: S.ycb, hz: S.hz, hy: S.hy, pgx: S.pgx, pgz: S.pgz, bb: [g.boundingBox.min.toArray(), g.boundingBox.max.toArray()], coverY: [q(0), q(.01), q(.05), q(.1), q(.25), q(.5)] }; }, _figs: () => FIGS.map(f => [f.img, +(f.o || 0).toFixed(2), !!f.loaded, f.sprite.visible, f.sprite.position.toArray().map(v => +v.toFixed(2))]), _bookPose: (which, a) => { const b = which === 'fazit' ? trio.children[trio.children.length - 1] : parts[parts.length - 1] && parts[parts.length - 1].o; const B = b && b.userData.book; if (!B) return null; B.hinge.rotation.x = a; const F = [.22, .4, .56, .7, .84]; B.leaves.forEach((l, i) => { l.visible = a > .01; l.rotation.x = a * F[i]; }); (B.inside || []).forEach(m => m.visible = a > .01); markDirty(); return { real: !!B.real }; }, _gap: (nm, K = 12) => { const o = scene.getObjectByName(nm); if (!o) return null; o.updateMatrixWorld(true); const b = new THREE.Box3().setFromObject(o), S = new Array(K).fill(1e9), v = new THREE.Vector3();
+window.__deck = { goTo: n => goTo(n), _trainAxes: () => { const v = new THREE.Vector3(), q = new THREE.Vector3(), t = new THREE.Vector3(); const meas = (cars, curve) => cars.filter(o => o.visible).map(o => { o.updateMatrixWorld(true); let n = 0, mx = 0, mz = 0; const P = [];
+      o.traverse(m => { if (!m.isMesh || !m.visible) return; const A = m.geometry.attributes.position, st = Math.max(1, Math.floor(A.count / 3000)); for (let i = 0; i < A.count; i += st) { v.fromBufferAttribute(A, i).applyMatrix4(m.matrixWorld); P.push(v.x, v.z); mx += v.x; mz += v.z; n++; } });
+      if (!n) return null; mx /= n; mz /= n; let a = 0, b = 0, c = 0; for (let i = 0; i < P.length; i += 2) { const dx = P[i] - mx, dz = P[i + 1] - mz; a += dx * dx; b += dz * dz; c += dx * dz; } const phi = .5 * Math.atan2(2 * c, a - b);
+      let best = 1e9, bu = 0; for (let i = 0; i <= 800; i++) { curve.getPointAt(i / 800, q); const d = (q.x - mx) ** 2 + (q.z - mz) ** 2; if (d < best) { best = d; bu = i / 800; } } curve.getTangentAt(bu, t); const tau = Math.atan2(t.z, t.x);
+      let d = Math.abs(phi - tau) % Math.PI; d = Math.min(d, Math.PI - d); return [+(d * 180 / Math.PI).toFixed(2), +Math.sqrt(best).toFixed(4)]; });
+    const B = PROPS.find(P => P.name === 'Bahn_DOA'); return { doa: B && RAILS[1] ? meas(B.g.children.filter(o => o.isGroup), RAILS[1].curve) : null, ww: WW.TR && WW.TR.ok ? meas(WW.TR.cars, WW.TRK.curve) : null }; }, _dio: () => DIO.doa.items.map(h => { const m = TERR.doa; return [+h.position.x.toFixed(3), +h.position.z.toFixed(3), +h.position.y.toFixed(4), +DIO.doa.hitY(m && m.visible ? m : null, h.position.x, h.position.z, -9).toFixed(4), +(m ? m.scale.y : -1).toFixed(3), +(new THREE.Box3().setFromObject(h).min.y).toFixed(4)]; }), _scene: () => scene, _hit: (sx, sy) => { const rc = new THREE.Raycaster(); rc.camera = camera; rc.setFromCamera(new THREE.Vector2(sx / innerWidth * 2 - 1, 1 - sy / innerHeight * 2), camera); const vis = o => { while (o) { if (!o.visible) return false; o = o.parent; } return true; }; return rc.intersectObjects(scene.children, true).filter(h => vis(h.object) && !h.object.isLine).slice(0, 4).map(h => { let o = h.object, path = []; while (o) { path.push(o.name || o.type); o = o.parent; } return [path.slice(0, 5).join('<'), h.object.type, h.object.material && h.object.material.color ? h.object.material.color.getHexString() : '', +h.point.x.toFixed(2), +h.point.y.toFixed(2), +h.point.z.toFixed(2), h.object.visible]; }); }, _ext: () => ({ aa: WW.AAS.map(A => [A.sd, A.ok ? 1 : 0, +A.yaw.toFixed(2), +A.pit.toFixed(2), A.bursts.filter(b => b.t >= 0).length]), bal: WW.BALS.map(B => [B.sd, B.ok ? 1 : 0, +B.o.position.x.toFixed(2), +B.o.position.z.toFixed(2)]), tr: [WW.TR.ok ? 1 : 0, +WW.TR.s.toFixed(3), WW.TR.dir, +WW.TR.cars[0].position.x.toFixed(3), +WW.TR.cars[0].position.z.toFixed(3)], fl: WW.FLARES.filter(F => F.t >= 0).length }), _look: (p, t) => { camera.position.set(p[0], p[1], p[2]); camera.lookAt(t[0], t[1], t[2]); camera.updateMatrixWorld(); markDirty(); }, _nan: () => { const r = []; scene.traverse(m => { if (m.geometry && m.geometry.attributes.position && Array.prototype.some.call(m.geometry.attributes.position.array, Number.isNaN)) r.push([m.name, m.parent && m.parent.name, m.type, m.geometry.attributes.position.count]); }); return r; }, _simT: () => WW.PLANES.length ? WW.PLANES[0].t : 0, _planes: () => WW.PLANES.map(P => [P.sd, P.ph, +P.x.toFixed(3), +P.z.toFixed(3), +(P.y - P.y0).toFixed(3), +P.L.toFixed(3), P.nb || 0, P.ok ? 1 : 0, +P.s.toFixed(3), P.E.it === undefined ? -1 : +P.E.it.toFixed(2), +P.cx.toFixed(2), +P.cz.toFixed(2), +P.bt.toFixed(2), WW_PLDBG(P), P.dbg]), _wwDt: x => { WW_DT.v = x; }, _booksReal: () => BOOK.all.map(b => !!(b.userData.book && b.userData.book.real)), _relief: (x, z) => relief(x, z), _isLand: (x, z) => isLand(x, z), _motion: () => { const B = PROPS.find(P => P.name === 'Bahn_DOA'), lo = B && B.g.children[0]; return { ships: Object.entries(SHIPS).map(([k, S]) => [k, +S.g.position.x.toFixed(4), +S.g.position.z.toFixed(4), +S.g.position.y.toFixed(4), +S.g.rotation.y.toFixed(4), S.g.visible ? 1 : 0, +(S.o * S.v).toFixed(3), +S.u.toFixed(4)]), loco: B ? [B.g.visible ? 1 : 0, +(B.uu || 0).toFixed(4), lo ? +lo.rotation.y.toFixed(4) : 0, lo ? +lo.position.x.toFixed(4) : 0, lo ? +lo.position.z.toFixed(4) : 0, lo ? +(lo.position.y - relief(lo.position.x, lo.position.z)).toFixed(4) : 0, lo && lo.visible ? 1 : 0] : null }; }, _rotProp: (n, r) => { const o = scene.getObjectByName(n); if (!o) return null; o.rotation.y = r; markDirty(); return true; }, _cam: () => camera.position.toArray(), _probe: (pts, R = .3) => { const rc = new THREE.Raycaster(), pl = new THREE.Plane(new THREE.Vector3(0, 1, 0), -.05), v = new THREE.Vector3(); return pts.map(([sx, sy]) => { rc.setFromCamera(new THREE.Vector2(sx / innerWidth * 2 - 1, 1 - sy / innerHeight * 2), camera); if (!rc.ray.intersectPlane(pl, v)) return null; const x = +v.x.toFixed(2), z = +v.z.toFixed(2), fr = footRelief(x, z, R, R); let terr = null; const r2 = new THREE.Raycaster(); r2.ray.direction.set(0, -1, 0); Object.entries(TERR).forEach(([id, m]) => { if (!m.isMesh) return; const vis = m.visible, sy0 = m.scale.y; m.visible = true; m.scale.y = 1; m.updateMatrixWorld(true); for (const [dx, dz] of [[0, 0], [R, 0], [-R, 0], [0, R], [0, -R]]) { r2.ray.origin.set(x + dx, 30, z + dz); if (r2.intersectObject(m, false).length) terr = id; } m.visible = vis; m.scale.y = sy0; m.updateMatrixWorld(true); }); return [sx, sy, x, z, isLand(x, z), terr, +(fr.max - fr.min).toFixed(3)]; }); }, _bookS: () => { const S = BOOK.split; if (!S) return null; const g = BOOK.tpl.geometry; g.computeBoundingBox(); const P = g.attributes.position, I = S.cover.index.array, ys = []; for (let t = 0; t < I.length; t++) ys.push(P.getY(I[t])); ys.sort((a, b) => a - b); const q = f => +ys[Math.floor(f * (ys.length - 1))].toFixed(4); return { T: S.T, ycb: S.ycb, hz: S.hz, hy: S.hy, pgx: S.pgx, pgz: S.pgz, bb: [g.boundingBox.min.toArray(), g.boundingBox.max.toArray()], coverY: [q(0), q(.01), q(.05), q(.1), q(.25), q(.5)] }; }, _figs: () => FIGS.map(f => [f.img, +(f.o || 0).toFixed(2), !!f.loaded, f.sprite.visible, f.sprite.position.toArray().map(v => +v.toFixed(2))]), _bookPose: (which, a) => { const b = which === 'fazit' ? trio.children[trio.children.length - 1] : parts[parts.length - 1] && parts[parts.length - 1].o; const B = b && b.userData.book; if (!B) return null; B.hinge.rotation.x = a; const F = [.22, .4, .56, .7, .84]; B.leaves.forEach((l, i) => { l.visible = a > .01; l.rotation.x = a * F[i]; }); (B.inside || []).forEach(m => m.visible = a > .01); markDirty(); return { real: !!B.real }; }, _gap: (nm, K = 12) => { const o = scene.getObjectByName(nm); if (!o) return null; o.updateMatrixWorld(true); const b = new THREE.Box3().setFromObject(o), S = new Array(K).fill(1e9), v = new THREE.Vector3();
     o.traverse(m => { if (!m.isMesh || !m.visible) return; const A = m.geometry.attributes.position; for (let i = 0; i < A.count; i += 3) { v.fromBufferAttribute(A, i).applyMatrix4(m.matrixWorld); const k = Math.min(K - 1, Math.floor((v.x - b.min.x) / (b.max.x - b.min.x) * K)); S[k] = Math.min(S[k], v.y - relief(v.x, v.z)); } });
     return S.map(x => +(x * 100).toFixed(2)); }, _tex: () => FIGS.filter(f => f.loaded).map(f => { const im = f.sprite.material.map && f.sprite.material.map.image; return [f.img, im ? im.width + 'x' + im.height : null, (DIMS[f.img] || []).join('x')]; }).concat([...TEX.entries()].filter(([k, e]) => e.tex).map(([k, e]) => [k, (e.tex.image.naturalWidth || e.tex.image.width) + 'x' + (e.tex.image.naturalHeight || e.tex.image.height), (DIMS[k] || []).join('x')])), _ll: (lon, lat) => { const p = llW(lon, lat); return [+p.x.toFixed(3), +p.z.toFixed(3), +relief(p.x, p.z).toFixed(3)]; }, _proj: (x, y, z) => { const v = new THREE.Vector3(x, y, z).project(camera); return [Math.round((v.x + 1) / 2 * innerWidth), Math.round((1 - v.y) / 2 * innerHeight)]; }, _wwGround: () => WW.guns.map(G => G.o).concat(WW.men.fr.concat(WW.men.de, WW.men.ru).map(M => M.o)).map(o => { const b = new THREE.Box3().setFromObject(o, true), cx = (b.min.x + b.max.x) / 2, cz = (b.min.z + b.max.z) / 2, fr = footRelief(cx, cz, b.max.x - b.min.x, b.max.z - b.min.z); return [+((b.min.y - fr.max) * 100).toFixed(1), +((b.min.y - fr.min) * 100).toFixed(1)]; }), _ww: () => ({ on: WW.on, guns: WW.guns.map(G => [G.n, G.sh.visible, G.fl.visible, G.pf.visible, G.s, G.T && G.T.s, G.tr.k, G.sm.visible, G.db.visible]), gp: WW.guns.map(G => [G.s, +G.o.position.x.toFixed(2), +G.o.position.z.toFixed(2)]), bp: WW.BLD.map(B => [+B.g.position.x.toFixed(2), +B.g.position.z.toFixed(2), +(B.hw || 0).toFixed(2)]), bld: WW.BLD.map(B => [B.k, !!B.ok, !!B.shot, B.burn === undefined ? null : +B.burn.toFixed(2)]), t: WW.guns.map(G => [+(+G.t).toFixed(2), G.fly === undefined ? 'u' : G.fly === false ? 'f' : +(+G.fly).toFixed(2)]), smd: WW.guns.filter(G => G.sm.visible).map(G => [G.sm.position.toArray().map(v => +v.toFixed(3)), +G.sm.scale.x.toFixed(3), +G.sm.material.opacity.toFixed(2), G.sm.parent && G.sm.parent.visible, +(G.it || 0).toFixed(2), G.pf.visible, +G.pf.material.opacity.toFixed(2)]), imp: WW.guns.filter(G => G.sm.visible).map(G => G.b.toArray().map(v => +v.toFixed(3))) }), _books: () => { const r = renderer.info.render; return [modelRoot.visible, +STOW.s.toFixed(2), r.calls]; }, _planeRects: () => PLANES.filter(p => p.slide === currentSlide).map(p => { p.group.updateMatrixWorld(true); const b = new THREE.Box3().setFromObject(p.photo); let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
     for (const x of [b.min.x, b.max.x]) for (const y of [b.min.y, b.max.y]) for (const z of [b.min.z, b.max.z]) { const v = new THREE.Vector3(x, y, z).project(camera), sx = (v.x + 1) / 2 * innerWidth, sy = (1 - v.y) / 2 * innerHeight; x0 = Math.min(x0, sx); x1 = Math.max(x1, sx); y0 = Math.min(y0, sy); y1 = Math.max(y1, sy); }
