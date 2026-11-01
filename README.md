@@ -1,1 +1,1 @@
-Just a school project about the german colonies, maked using grok bot and claude.
+Just a school presentation about the german colonies and the German Reich, code maked using grok bot and claude. 
