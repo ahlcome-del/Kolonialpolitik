@@ -6296,7 +6296,7 @@ function $i(e, t = 0, a = 1.15) {
   return (
     i.call(() => {
       (o.leaves.forEach((r) => {
-        ((r.visible = !0), (r.rotation.x = 0));
+        ((r.visible = !1), (r.rotation.x = 0));
       }),
         (o.inside || []).forEach((r) => (r.visible = !0)));
     }),
@@ -15663,7 +15663,7 @@ window.__deck = {
     const n = [0.22, 0.4, 0.56, 0.7, 0.84];
     return (
       o.leaves.forEach((i, r) => {
-        ((i.visible = t > 0.01), (i.rotation.x = t * n[r]));
+        ((i.visible = !1), (i.rotation.x = t * n[r]));
       }),
       (o.inside || []).forEach((i) => (i.visible = t > 0.01)),
       V(),
