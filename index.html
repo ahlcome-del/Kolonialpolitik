@@ -597,6 +597,54 @@ body *:not(.ttl):not(.fin):not(.hero h1){letter-spacing:0!important;}
 
 /* p97 : diapo « ende » – voile limité au haut (titre + dates), la photo du traité en bas à gauche reste entièrement visible */
 .slide.scrim.scrimTop::before{bottom:auto;height:calc(20rem + 52vh);-webkit-mask-image:linear-gradient(180deg,#000 calc(100% - 7vh),transparent);mask-image:linear-gradient(180deg,#000 calc(100% - 7vh),transparent);}
+
+/* p99 · finitions « presse » (revue du 2/11) : une seule échelle typographique, encadrés homogènes, aucun filet décoratif */
+:root{--fs-k:1.05rem;--fs-cap:.95rem;--box-r:6px;--box-p:1.5rem;--box-bg:rgba(29,25,21,.96);}
+/* (3) encadrés : même fond, mêmes coins, marges égales sur les quatre côtés */
+.glass,.glass.frost,.slide .grid>.bare,.slide .grid>.bare.mmap,.ackbig,.slide .grid>.pull{border-radius:var(--box-r)!important;background:var(--box-bg)!important;padding:var(--box-p)!important;box-shadow:0 .6rem 1.4rem -.8rem rgba(0,0,0,.55);}
+.glass.roomy,.slide .grid>.glass.tlw{padding:1.8rem!important;}
+.dash .glass.dense{padding:1.1rem!important;}
+.slide .grid>.glass.strip{padding:.55rem var(--box-p)!important;}
+.slide .grid>.glass.band{padding:var(--box-p)!important;}
+/* (5) échelle : rubriques/surtitres identiques, légendes identiques */
+.kick,.gk,.gsub,.card dt,.card .cmp,.hero .sub{font-family:var(--sans)!important;font-size:var(--fs-k)!important;line-height:1.2!important;}
+.kick{font-weight:600!important;}
+.gk,.gsub,.card dt,.card .cmp{font-weight:500!important;}
+.hero .sub{font-size:1.25rem!important;}
+.slide>.cap,.small,.note,.bars .br span,.card .bars .br span,.stat .l,.bigstats .stat .l,.bare.wirt .stat .l,.exp span,#tl .lab,#dlab .dn,.mlab span{font-size:var(--fs-cap)!important;}
+.slide>.cap{text-align:left;}
+/* (2) frise basse : un trait fin neutre, l'accent seulement sur l'année courante */
+#tl .ln{height:1px;margin-top:1.55rem;background:rgba(238,230,212,.28);}
+#tl .band,#tl .dec::after{display:none;}
+#tl .fill{background:rgba(238,230,212,.55);}
+#tl .ln>i{top:-3px;height:7px;background:rgba(238,230,212,.3);}
+#tl .ln>i.on{background:rgba(238,230,212,.55);}
+#tl .ln>i.cur{top:-4px;height:9px;width:1px;background:var(--accent);}
+#tl .head::before{top:-6px;height:13px;width:1px;margin-left:-.5px;background:var(--accent);}
+#tl .lab{top:1rem;}
+.bars .br .tr{border-left:0;}
+/* (1) Bilanz : pas de graduations ni de lignes de fond (en perspective elles ne tombaient pas sur les barres) – la valeur est écrite sur chaque barre */
+#dlab .dt{display:none!important;}
+/* (4) Gewalt · « Was Geschah? » : titre sur une ligne au-dessus de la grille, colonnes égales remplies */
+.glass:has(.chron)>div:first-child{flex-direction:column;align-items:flex-start!important;gap:.35rem!important;margin-bottom:1.1rem!important;}
+.glass:has(.chron) .gt br,.chron span br{display:none;}
+.chron{gap:1.1rem 2rem;}
+.chron span{text-wrap:pretty;}
+/* (6) étiquettes de carte sur une seule ligne */
+.mlab span,.mlab.cap span{white-space:nowrap!important;}
+.mlab:not(.cap):not(.route):not(.left) span{top:-2.3rem;left:.5rem;}
+/* (8) fiche colonie : barres de comparaison lisibles, couleurs de Bilanz, valeurs à droite */
+.card .bars .br{--lw:8.5rem;margin:.45rem 0;gap:.9rem;}
+.card .bars .br .tr{height:1.35rem;}
+.card .bars .br i{background:var(--accent);}
+.card .bars .br.grey i{background:var(--ink2);}
+.card .bars .br em{display:block;font:600 1.05rem/1 var(--serif);min-width:6.8rem;text-align:right;}
+/* (9) page de titre : titre plus présent */
+.hero h1{font-size:8.2rem;}
+.hero .date{font-size:3.3rem;}
+/* (10) Fazit : plus d'air entre les livres et le texte, chiffres romains calés sur la première ligne */
+.fz.fz2{margin-left:2.6rem;}
+.fz.fz2>em{font-size:2.3rem;line-height:1;top:-.05rem;}
 </style>
 <!-- Bibliothèques intégrées (hors ligne) : three.js r169 + GLTFLoader + GSAP 3.12.5 (licences MIT / « no charge » GreenSock) -->
 <script>
@@ -7065,7 +7113,7 @@ function La(e, t, a, o, n, i, r, d) {
     Ie(t)
       .then((h) => {
         const f = b.g,
-          p = Ze(h, a);
+          p = Ze(a.clone ? h.clone(!0) : h, a);
         (f.remove(f.userData.proxy), f.add(p));
         const g = f.rotation.y,
           E = f.position.clone();
@@ -7166,7 +7214,9 @@ function Yi(e, t, a, o, n, i) {
       2.6,
       [0.3, 1],
       [0.5, 0.08, 0.6],
-    ).fp = [0.56, 0.56]));
+    ).fp = [0.56, 0.56]),
+    La("Sextant", "sextant", { L: 1.05, ry: 2.3, env: 0.9, clone: !0 }, -1.75, 1.95, -0.35, [-0.6, 1], [0.95, 0.5, 0.8]),
+    La("Siegel", "seal", { L: 0.62, ry: -0.6, env: 0.6, y0: -0.003, clone: !0 }, 1.3, -1.5, 0.9, [1, -0.4], [0.62, 0.4, 0.62]));
   const t = Yi(
     "Globus",
     (a) => {
@@ -7490,7 +7540,7 @@ function $r(e, t, a = 0) {
         onUpdate: V,
       }),
       R.set(i, { autoAlpha: 0 }),
-      R.to(o.grid.material, { opacity: 0.16, duration: 0.8, delay: a, onUpdate: V }));
+      R.to(o.grid.material, { opacity: 0, duration: 0.8, delay: a, onUpdate: V }));
     const r = function () {
       o.on || (this.kill(), R.set(this.targets(), { autoAlpha: 0 }));
     };
@@ -12739,6 +12789,22 @@ function Sc(e) {
     xa.delete(e));
 }
 const Tt = [];
+let kcContactT = null;
+function kcContact() {
+  if (kcContactT) return kcContactT;
+  const e = document.createElement("canvas");
+  e.width = 128;
+  e.height = 32;
+  const t = e.getContext("2d"),
+    a = t.createRadialGradient(64, 16, 2, 64, 16, 64);
+  (a.addColorStop(0, "rgba(0,0,0,.85)"),
+    a.addColorStop(0.45, "rgba(0,0,0,.42)"),
+    a.addColorStop(1, "rgba(0,0,0,0)"),
+    t.setTransform(1, 0, 0, 0.25, 0, 12),
+    (t.fillStyle = a),
+    t.fillRect(0, -48, 128, 128));
+  return (kcContactT = new s.CanvasTexture(e));
+}
 function Ec(e, t) {
   const a = new s.Group(),
     o = (p, g, E) => {
@@ -12763,7 +12829,8 @@ function Ec(e, t) {
     d = t.cut ? null : o(null, 9340275, n + 0.5);
   d && (d.geometry = Uo);
   const b = t.cut ? null : o(yc, 16777215, n + 1),
-    h = o(Ba, 16777215, n + 2);
+    h = o(Ba, 16777215, n + 2),
+    c = t.cut && t.foot ? o(kcContact(), 0, n + 1.5) : null;
   (t.cut && (h.material.alphaTest = 0.08),
     (h.userData.card = t.card || t.img),
     (a.visible = !1),
@@ -12776,6 +12843,7 @@ function Ec(e, t) {
     photo: h,
     frame: b,
     shadow: r,
+    contact: c,
     slab: d,
     mats: a.children.map((p) => p.material),
     o: 0,
@@ -12822,6 +12890,7 @@ function Ms() {
       } else e.shadow.scale.set(E * 1.28, m * 1.28, 1);
       e.shadow.position.set(m * 0.045, -m * 0.06, -0.02);
     }
+    e.contact && (e.contact.scale.set(p * 1.05, h * 0.11, 1), e.contact.position.set(p * 0.04, -h * 0.49, -0.01));
   });
 }
 function ks(e, t) {
@@ -13195,7 +13264,7 @@ const le = [
     id: "titel",
     tick: 0,
     head: null,
-    frame: { c: [0, 0.95, 0], az: 18, el: 13, dist: 12, at: It([5, 9, 7, 13]) },
+    frame: { c: [0, 0.95, 0], az: 18, el: 13, dist: 10.4, at: It([5, 9, 7, 13]) },
     planes: [{ img: "bismarck2.webp", area: [9, 13, 1, 13], d: 3, cut: !0, align: "r" }],
     build(e) {
       Mt(
@@ -13395,7 +13464,7 @@ const le = [
     planes: [
       { img: "usambarabahn.webp", area: [7, 11, 1, 7], d: 5.4, cap: "s5.cap1" },
       { img: "sisalballen.webp", area: [11, 13, 1, 7], d: 5.2 },
-      { img: "officer.webp", area: [7, 10, 7, 13], d: 4.6, cut: !0 },
+      { img: "officer.webp", area: [7, 10, 7, 13], d: 4.6, cut: !0, foot: !0 },
       { img: "sisalernte.webp", area: [10, 13, 7, 13], d: 5, cap: "s5.cap2" },
     ],
     build(e) {
@@ -13419,7 +13488,7 @@ const le = [
       { img: "schutztruppe.webp", area: [7, 11, 1, 7], d: 5.4, cap: "s6.capTruppe" },
       { img: "witbooi.webp", area: [11, 13, 1, 7], d: 5.2, cap: "s6.capWitbooi" },
       { img: "trotha.webp", area: [7, 10, 7, 12], d: 4.6, cut: !0, cap: "s6.capTrotha" },
-      { img: "maharero.webp", area: [10, 13, 7, 12], d: 4.6, cut: !0, cap: "s6.capMaharero" },
+      { img: "maharero.webp", area: [10, 13, 7, 12], d: 4.6, cut: !0, foot: !0, cap: "s6.capMaharero" },
     ],
     build(e) {
       sa(e, Re.s6, [1, 6, 1, 7]);
@@ -13721,11 +13790,17 @@ function Vc(e, t = 1.2) {
     overwrite: !0,
     onComplete() {
       ie("span", d).textContent = b;
+      const sq = (x) => String(x).replace(/<br\s*\/?>/gi, " ").replace(/\s+/g, " ").trim().toLowerCase(),
+        dup =
+          r >= 0 &&
+          le[e] &&
+          le[e].sec &&
+          sq(le[e].sec.textContent).includes(sq(a.events[r][1]));
       const h = r >= 0 ? i(a.events[r][0]) : 0,
         f = o.querySelector(".ln").clientWidth,
         p = d.offsetWidth;
       ((d.style.left = Math.max(0, Math.min(f - p, h * f - p / 2)) + "px"),
-        b && R.to(d, { autoAlpha: 1, duration: 0.5, delay: t * 0.5 }));
+        b && !dup && R.to(d, { autoAlpha: 1, duration: 0.5, delay: t * 0.5 }));
     },
   });
 }
