@@ -13355,6 +13355,10 @@ const le = [
         card: "Karte: Deutsche Kolonien 1885 (Hauptkarte)",
       },
     ],
+    build(e) {
+      /* Kapitelbeginn: Titel „KAPITEL II · KOLONIALREICH“ steht hier (Seite 4) */
+      (sa(e, { ...Re.s4, body: [] }, [5, 11, 1, 3]).classList.add("tight"), Cs(e, "togo"));
+    },
   }),
   eo("kamerun", {
     az: 10,
@@ -13444,8 +13448,7 @@ const le = [
       side: "top",
     })),
     build(e) {
-      (sa(e, Re.s4, [10, 13, 1, 6]).classList.add("tight"),
-        ra(
+      (ra(
           e,
           [1, 13, 12, 13],
           `<div class="list hlist">${Yo.map((t) => `<div class="row" data-col="${t}">${et("pin")}<b>${$(Re.s4.colonies[t][0])}</b><span>${$(Re.s4.colonies[t][1])}</span></div>`).join("")}</div>`,
