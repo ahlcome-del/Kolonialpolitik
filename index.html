@@ -274,10 +274,66 @@ svg.map .pin{fill:var(--ink);} svg.map .num{fill:#191613;font:800 9px var(--sans
   background:linear-gradient(90deg,rgba(22,19,16,.95) 0%,rgba(22,19,16,.9) 55%,rgba(22,19,16,0) 100%);}
 
 #fps{position:fixed;right:.6rem;top:.6rem;z-index:9;font:12px/1.3 ui-monospace,Consolas,monospace;background:rgba(20,18,15,.85);color:#fff;padding:.35rem .55rem;white-space:pre;display:none;}
-#loader{position:fixed;inset:0;display:grid;place-items:center;z-index:10;background:var(--paper);}
-#loader i{display:block;width:12rem;height:2px;background:rgba(238,230,212,.15);overflow:hidden;position:relative;}
-#loader i::after{content:'';position:absolute;inset:0;background:var(--ink);transform-origin:0 50%;animation:ld 1.2s ease-in-out infinite;}
-@keyframes ld{0%{transform:scaleX(0)}60%{transform:scaleX(1)}100%{transform:scaleX(1);opacity:0}}
+/* ---- Preloader (Côme-style: trace + continuous bar, compositor-friendly) ---- */
+#loader{
+  position:fixed;inset:0;z-index:90;display:grid;place-content:center;justify-items:center;gap:1.75rem;
+  background:var(--paper);
+  opacity:1;visibility:visible;
+  transition:opacity .9s cubic-bezier(.22,.61,.36,1), visibility 0s linear .9s;
+  pointer-events:all;
+  will-change:opacity;
+}
+#loader.is-done{opacity:0;visibility:hidden;pointer-events:none;}
+#loader .kp-mark{width:11.5rem;height:auto;overflow:visible;}
+#loader .kp-mark .ring,#loader .kp-mark .spoke,#loader .kp-mark .diamond{
+  fill:none;stroke:var(--ink);stroke-linecap:round;stroke-linejoin:round;
+  stroke-dasharray:1;stroke-dashoffset:1;
+  animation:kp-draw 2.1s cubic-bezier(.22,.61,.36,1) forwards;
+}
+#loader .kp-mark .ring{stroke-width:1.6;}
+#loader .kp-mark .ring.inner{stroke-width:1;stroke:var(--ink2);animation-delay:.18s;}
+#loader .kp-mark .spoke{stroke-width:1.2;stroke:var(--ink2);animation-delay:.35s;}
+#loader .kp-mark .diamond{stroke-width:1.3;animation-delay:.55s;}
+#loader .kp-mark .fill-dot{
+  fill:var(--ink);opacity:0;transform-origin:140px 40px;
+  animation:kp-dot .7s cubic-bezier(.22,.61,.36,1) .95s forwards;
+}
+#loader .kp-word{
+  margin:0;padding:0;border:0;font:600 .72rem/1 var(--sans);letter-spacing:.42em;text-indent:.42em;
+  text-transform:uppercase;color:var(--ink);opacity:0;
+  transform:translate3d(0,.35rem,0);
+  animation:kp-word .85s cubic-bezier(.22,.61,.36,1) 1.15s forwards;
+}
+#loader .kp-sub{
+  margin:-1.1rem 0 0;font:400 .58rem/1 var(--serif);letter-spacing:.28em;text-indent:.28em;
+  color:var(--muted);opacity:0;
+  animation:kp-word .85s cubic-bezier(.22,.61,.36,1) 1.35s forwards;
+}
+#loader .kp-bar{
+  position:relative;width:7.5rem;height:1px;background:rgba(238,230,212,.15);overflow:hidden;
+  border-radius:1px;
+}
+#loader .kp-bar > span{
+  position:relative;z-index:1;display:block;height:100%;width:100%;
+  background:var(--ink2);transform-origin:0 50%;transform:scaleX(0);
+  will-change:transform;
+}
+/* Autonomous compositor fill — keeps moving even if the main thread is busy */
+#loader .kp-bar::after{
+  content:"";position:absolute;inset:0;background:var(--ink2);transform-origin:0 50%;
+  transform:scaleX(0);animation:kp-barfill 3.2s cubic-bezier(.16,.72,.3,1) forwards;
+}
+@keyframes kp-draw{to{stroke-dashoffset:0}}
+@keyframes kp-dot{to{opacity:1;transform:scale(1)}}
+@keyframes kp-word{to{opacity:1;transform:translate3d(0,0,0)}}
+@keyframes kp-barfill{0%{transform:scaleX(0)}55%{transform:scaleX(.62)}100%{transform:scaleX(.9)}}
+@media (prefers-reduced-motion:reduce){
+  #loader .kp-mark .ring,#loader .kp-mark .spoke,#loader .kp-mark .diamond{animation-duration:.01ms;animation-delay:0s;stroke-dashoffset:0}
+  #loader .kp-mark .fill-dot,#loader .kp-word,#loader .kp-sub{animation-duration:.01ms;animation-delay:0s;opacity:1;transform:none}
+  #loader .kp-bar::after{animation-duration:1.2s}
+  #loader{transition-duration:.35s}
+}
+html:not(.js) #loader{display:none}
 
 /* ---- Récapitulatif dense (diapositive avant le Fazit) : panneaux compacts ---- */
 .dash .glass.dense{padding:1.1rem 1.3rem 1rem;}
@@ -4517,7 +4573,82 @@ void main() {
 <body>
 <noscript>Diese Präsentation benötigt JavaScript und WebGL.</noscript>
 <canvas id="gl" aria-hidden="true"></canvas>
-<div id="loader"><i></i></div>
+<div id="loader" role="status" aria-live="polite">
+  <svg class="kp-mark" viewBox="0 0 280 88" aria-hidden="true" focusable="false">
+    <circle class="ring" pathLength="1" cx="140" cy="40" r="30"/>
+    <circle class="ring inner" pathLength="1" cx="140" cy="40" r="22"/>
+    <path class="spoke" pathLength="1" d="M140 16 V64 M116 40 H164"/>
+    <path class="diamond" pathLength="1" d="M140 30 L150 40 L140 50 L130 40 Z"/>
+    <circle class="fill-dot" cx="140" cy="40" r="2.2"/>
+  </svg>
+  <p class="kp-word">Kolonialpolitik</p>
+  <p class="kp-sub">1884 — 1919</p>
+  <div class="kp-bar"><span id="loader-bar"></span></div>
+  <p class="visually-hidden" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Laden…</p>
+</div>
+<script>
+/* Early loader boot — runs before heavy modules; never blocks the page. */
+(function () {
+  try { history.scrollRestoration = 'manual'; } catch (e) {}
+  try {
+    if (location.hash) history.replaceState(null, '', location.pathname + location.search);
+  } catch (e) {}
+  try { window.scrollTo(0, 0); } catch (e) {}
+  document.documentElement.classList.add('js');
+
+  var bar = document.getElementById('loader-bar');
+  var loader = document.getElementById('loader');
+  if (!bar || !loader) return;
+
+  var T0 = performance.now();
+  var barVal = 0, barReal = 0, finished = false, raf = 0;
+  var reduced = false;
+  try { reduced = matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+
+  function clamp(x) { return x < 0 ? 0 : x > 1 ? 1 : x; }
+  function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
+  function barTime() {
+    var dur = reduced ? 1200 : 3000;
+    return Math.min(0.9, 0.92 * easeOut(clamp((performance.now() - T0) / dur)));
+  }
+  function paintBar(x) {
+    barVal = Math.max(barVal, clamp(x));
+    bar.style.transform = 'scaleX(' + barVal.toFixed(4) + ')';
+  }
+  function tick() {
+    if (finished) return;
+    var v = Math.max(barReal * 0.92, barTime());
+    if (v > barVal + 1e-4) paintBar(v);
+    raf = requestAnimationFrame(tick);
+  }
+  paintBar(0);
+  raf = requestAnimationFrame(tick);
+
+  function fadeOut() {
+    loader.classList.add('is-done');
+    setTimeout(function () {
+      try { if (loader && loader.parentNode) loader.parentNode.removeChild(loader); } catch (e) {}
+    }, 1000);
+  }
+
+  function finishLoader() {
+    if (finished) return;
+    finished = true;
+    if (raf) cancelAnimationFrame(raf);
+    barReal = 1;
+    paintBar(1);
+    var minTime = reduced ? 700 : 2400;
+    var left = Math.max(0, minTime - (performance.now() - T0));
+    setTimeout(fadeOut, left);
+  }
+
+  // Public hook for the existing boot Promise.all — bar always reaches 100% first
+  window.__kpFinishLoader = finishLoader;
+
+  // Absolute safety net at 9 s
+  setTimeout(function () { if (!finished) finishLoader(); }, 9000);
+})();
+</script>
 <div id="head"></div>
 <div id="stage" role="main" aria-label="Präsentation"></div>
 <div id="labels"></div>
@@ -15252,7 +15383,7 @@ Promise.all([
   Jc(),
 ]).then(() => {
   ((ko = !0),
-    R.to("#loader", { autoAlpha: 0, duration: 0.6, onComplete: () => ie("#loader").remove() }),
+    (window.__kpFinishLoader ? window.__kpFinishLoader() : R.to("#loader", { autoAlpha: 0, duration: 0.6, onComplete: () => ie("#loader").remove() })),
     Ct(0, { first: !0 }));
   {
     let e = 0;
