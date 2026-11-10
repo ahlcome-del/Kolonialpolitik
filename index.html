@@ -41,6 +41,9 @@
   --accent:#B9573E; --rule:rgba(238,230,212,.17); --rule-strong:rgba(238,230,212,.5);
   --serif:'Source Serif 4',Georgia,'Times New Roman',serif; --sans:'Libre Franklin','Helvetica Neue',Arial,sans-serif;
   --noise:none;
+  --vig-rgb:18,16,14;
+  --vig-a:.4;
+  --grain-a:.48;
 }
 html{font-size:min(0.8333vw,1.4815vh);}   /* = 16 px × min(largeur/1920, hauteur/1080) */
 html,body{margin:0;height:100%;overflow:hidden;}
@@ -53,10 +56,10 @@ body{
 /* ---- Canvas 3D : plein écran, derrière l'interface ---- */
 #gl{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;display:block;}
 /* Grain de film : texture statique très légère (aucun coût par image) */
-#grain{position:fixed;inset:0;z-index:4;pointer-events:none;background:var(--noise);opacity:.7;}
-/* vignette (bords assombris, comme un tirage projeté) – statique */
-body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;background:radial-gradient(ellipse 75% 70% at 55% 50%,rgba(0,0,0,0) 55%,rgba(0,0,0,.55) 100%);}
-body.low #grain{display:none;}
+#grain{position:fixed;inset:0;z-index:1;pointer-events:none;background:var(--noise);opacity:var(--grain-a);mix-blend-mode:overlay;}
+/* Vignette douce, teinte adaptée à la région (variables mises à jour en JS) */
+body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;background:radial-gradient(ellipse 78% 72% at 50% 48%,rgba(0,0,0,0) 58%,rgba(var(--vig-rgb),var(--vig-a)) 100%);}
+body.low #grain{opacity:.28;mix-blend-mode:normal;}
 
 /* ---- Plateau HTML 1920×1080 centré et mis à l'échelle ---- */
 #stage{position:fixed;left:50%;top:50%;z-index:2;width:120rem;height:67.5rem;transform:translate(-50%,-50%);pointer-events:none;}
@@ -94,9 +97,9 @@ body.low #grain{display:none;}
 .years span{font:650 1.12rem/1.2 var(--sans);letter-spacing:.07em;}
 
 /* ---- Panneaux : fiches d'archives opaques (papier ≈95 %, filet supérieur, coins nets) ---- */
-.glass{position:absolute;box-sizing:border-box;padding:1.5rem 1.7rem 1.4rem;
+.glass{position:absolute;box-sizing:border-box;padding:1.65rem 1.85rem;
   background:var(--noise), var(--card);
-  border:1px solid rgba(238,230,212,.16);border-top:2px solid rgba(238,230,212,.75);border-radius:1px;
+  border:1px solid rgba(238,230,212,.16);border-top:2px solid rgba(238,230,212,.75);border-radius:.5rem;
   box-shadow:0 .1rem .15rem rgba(0,0,0,.12),0 .9rem 1.6rem -1rem rgba(0,0,0,.45);}
 /* Verre dépoli discret – uniquement sur le panneau d'introduction (slide 1) */
 .glass.frost{background:rgba(35,31,27,.88);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);}
@@ -5447,7 +5450,7 @@ const ut = {
   FOV: 38,
   START_POS: [0, 46, 640],
   ZOOM_DURATION: 3.4,
-  FLY_DURATION: 1.9,
+  FLY_DURATION: 2.7,
   MAX_PIXEL_RATIO: 1.5,
   LOW_PIXEL_RATIO: 0.85,
   AUTO_LOW_MS: 42,
@@ -5627,12 +5630,242 @@ const ne = new s.PerspectiveCamera(ut.FOV, innerWidth / innerHeight, 0.1, 1600),
   hr = new s.AmbientLight(16775406, 1.12),
   Ea = new s.DirectionalLight(16774892, 2.05);
 (Ea.position.set(5.5, 10, 7),
-  Ea.shadow.mapSize.set(2048, 2048),
-  Object.assign(Ea.shadow.camera, { left: -6, right: 6, top: 7, bottom: -6, near: 1, far: 40 }),
+  Ea.shadow.mapSize.set(1024, 1024),
+  Object.assign(Ea.shadow.camera, { left: -10, right: 10, top: 10, bottom: -10, near: 1, far: 48 }),
   (Ea.shadow.bias = -4e-4),
   (Ea.shadow.normalBias = 0.02),
   he.add(hr, Ea, Ea.target));
 let He = null;
+const kpL = (() => {
+  const t = new s.HemisphereLight(13224796, 9072736, 0.45);
+  he.add(t);
+  const a = (e, i, r, n, o, h, f, p, g, E, m, x, T, y, v) => ({
+    amb: new s.Color(e),
+    ambI: i,
+    sky: new s.Color(r),
+    gnd: new s.Color(n),
+    hemiI: o,
+    dir: new s.Color(h),
+    dirI: f,
+    dirPos: new s.Vector3(...p),
+    fog: new s.Color(g),
+    fogN: E,
+    fogF: m,
+    exp: x,
+    vig: T,
+    vigA: y,
+    grain: v,
+  }),
+    o = {
+      study: a(
+        "#E4D8C4",
+        0.98,
+        "#C9D3DC",
+        "#8A7060",
+        0.42,
+        "#F0E6D4",
+        1.82,
+        [5.5, 10, 7],
+        "#191613",
+        42,
+        170,
+        0.96,
+        [18, 16, 14],
+        0.4,
+        0.48,
+      ),
+      berlin: a(
+        "#C9D2DC",
+        0.88,
+        "#B7C4D2",
+        "#7A7874",
+        0.52,
+        "#E6E4DE",
+        1.62,
+        [3.8, 11.2, 5.5],
+        "#1A1C1F",
+        44,
+        175,
+        0.95,
+        [14, 16, 20],
+        0.42,
+        0.5,
+      ),
+      dswa: a(
+        "#E6C99A",
+        0.92,
+        "#EED3A0",
+        "#9A6B3A",
+        0.62,
+        "#FFC878",
+        1.88,
+        [8.4, 5.4, 3.6],
+        "#2A2116",
+        40,
+        165,
+        0.98,
+        [28, 20, 12],
+        0.38,
+        0.45,
+      ),
+      doa: a(
+        "#F0D4A0",
+        0.96,
+        "#F3E0B0",
+        "#7A5A30",
+        0.58,
+        "#FFD089",
+        1.95,
+        [7.4, 6.3, 4.4],
+        "#261C12",
+        40,
+        165,
+        1,
+        [26, 18, 10],
+        0.36,
+        0.45,
+      ),
+      guinea: a(
+        "#D5E0B8",
+        1.02,
+        "#C5D6B0",
+        "#4A5A38",
+        0.66,
+        "#F0E0A8",
+        1.58,
+        [5.2, 8.6, 5],
+        "#1C2218",
+        44,
+        170,
+        0.98,
+        [16, 20, 14],
+        0.36,
+        0.46,
+      ),
+      pacific: a(
+        "#C5D0D4",
+        1.06,
+        "#C8D4D8",
+        "#6A7068",
+        0.58,
+        "#E6ECE8",
+        1.38,
+        [3.6, 9.2, 7.8],
+        "#1C2022",
+        32,
+        130,
+        0.94,
+        [16, 20, 22],
+        0.44,
+        0.52,
+      ),
+    },
+    n = {
+      titel: "study",
+      zahlen: "study",
+      hintergrund: "berlin",
+      reich: "berlin",
+      togo: "guinea",
+      kamerun: "guinea",
+      dswa: "dswa",
+      gewalt: "dswa",
+      opfer: "dswa",
+      doa: "doa",
+      verwaltung: "doa",
+      neuguinea: "pacific",
+      kiautschou: "pacific",
+      ende: "berlin",
+      bilanz: "berlin",
+      opfer2: "berlin",
+      mandate: "berlin",
+      fazit: "berlin",
+      credits: "berlin",
+    },
+    i = matchMedia("(pointer: coarse), (hover: none) and (max-width: 900px)"),
+    r = { u: 1 },
+    d = new s.Color(),
+    b = new s.Vector3(),
+    h = new s.Vector3(),
+    f = [18, 16, 14];
+  function p() {
+    return i.matches || (navigator.maxTouchPoints > 1 && innerWidth < 900);
+  }
+  function g(e) {
+    const T = typeof le < "u" && le[e] && le[e].pose && le[e].pose.target;
+    return T ? T.clone() : new s.Vector3();
+  }
+  function E(e) {
+    const T = typeof le < "u" && le[e] && n[le[e].id];
+    return o[T] || o.study;
+  }
+  function m(e, T, y) {
+    const v = s.MathUtils.clamp(y, 0, 1),
+      z = (k, w) => s.MathUtils.lerp(k, w, v);
+    (d.lerpColors(e.amb, T.amb, v),
+      (hr.color.copy(d), (hr.intensity = z(e.ambI, T.ambI))),
+      d.lerpColors(e.sky, T.sky, v),
+      (t.color.copy(d), d.lerpColors(e.gnd, T.gnd, v), (t.groundColor.copy(d), (t.intensity = z(e.hemiI, T.hemiI)))),
+      d.lerpColors(e.dir, T.dir, v),
+      (Ea.color.copy(d), (Ea.intensity = z(e.dirI, T.dirI))),
+      h.lerpVectors(e.tgt, T.tgt, v),
+      Ea.target.position.copy(h),
+      b.lerpVectors(e.dirPos, T.dirPos, v),
+      Ea.position.copy(h).add(b),
+      Ea.target.updateMatrixWorld(),
+      d.lerpColors(e.fog, T.fog, v),
+      (he.fog.color.copy(d), (he.fog.near = z(e.fogN, T.fogN)), (he.fog.far = z(e.fogF, T.fogF))),
+      He && (He.toneMappingExposure = z(e.exp, T.exp)));
+    const k = document.documentElement.style;
+    for (let w = 0; w < 3; w++) f[w] = Math.round(z(e.vig[w], T.vig[w]));
+    (k.setProperty("--vig-rgb", f.join(",")),
+      k.setProperty("--vig-a", z(e.vigA, T.vigA).toFixed(3)),
+      k.setProperty("--grain-a", z(e.grain, T.grain).toFixed(3)),
+      V());
+  }
+  function x() {
+    const e = Ea.target.position;
+    return {
+      amb: hr.color.clone(),
+      ambI: hr.intensity,
+      sky: t.color.clone(),
+      gnd: t.groundColor.clone(),
+      hemiI: t.intensity,
+      dir: Ea.color.clone(),
+      dirI: Ea.intensity,
+      dirPos: Ea.position.clone().sub(e),
+      tgt: e.clone(),
+      fog: he.fog.color.clone(),
+      fogN: he.fog.near,
+      fogF: he.fog.far,
+      exp: (He && He.toneMappingExposure) || 0.96,
+      vig: f.slice(),
+      vigA: parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--vig-a")) || 0.4,
+      grain: parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--grain-a")) || 0.48,
+    };
+  }
+  function y(e, v, z, k) {
+    const w = x(),
+      A = Object.assign({}, E(v), { tgt: g(v) });
+    (R.killTweensOf(r),
+      (r.u = 0),
+      R.to(r, {
+        u: 1,
+        duration: z,
+        delay: k || 0,
+        ease: "expo.inOut",
+        onUpdate: () => m(w, A, r.u),
+        onComplete: () => m(w, A, 1),
+      }),
+      Bt(z + (k || 0)));
+  }
+  function v() {
+    const e = Object.assign({}, o.study, { tgt: new s.Vector3() });
+    m(e, e, 1);
+  }
+  return (v(), { tween: y, apply: v, mobile: p, snap: x, look: E });
+})();
+
+
 function ki() {
   const e = Be.mode === "high",
     t = document.createElement("canvas");
@@ -5653,12 +5886,12 @@ function ki() {
     (a.toneMapping = s.ACESFilmicToneMapping),
     (a.toneMappingExposure = 0.96),
     (a.outputColorSpace = s.SRGBColorSpace),
-    (a.shadowMap.enabled = e),
+    (a.shadowMap.enabled = e && !kpL.mobile()),
     (a.shadowMap.type = s.PCFSoftShadowMap),
     ie("#gl").replaceWith(t),
     He && He.dispose(),
     (He = a),
-    (Ea.castShadow = e),
+    (Ea.castShadow = e && !kpL.mobile()),
     he.traverse((o) => {
       o.material && [].concat(o.material).forEach((n) => (n.needsUpdate = !0));
     }),
@@ -5958,6 +6191,7 @@ const po = new s.Mesh(
     toneMapped: !1,
     opacity: 1,
     alphaTest: 0.02,
+    fog: !1,
   }),
 );
 ((po.renderOrder = -10), he.add(po));
@@ -6004,6 +6238,7 @@ function mr(e) {
         opacity: 0,
         toneMapped: !1,
         depthWrite: !1,
+        fog: !1,
       }),
     );
   ((b.renderOrder = -9), (b.visible = !1), he.add(b));
@@ -8006,15 +8241,15 @@ function Hr(e) {
   );
 }
 function Ir() {
-  const e = new s.MeshStandardMaterial({ color: Ae.fill, roughness: 0.8 }),
-    t = new s.MeshStandardMaterial({ color: Ae.deep, roughness: 0.9 });
+  const e = new s.MeshStandardMaterial({ color: Ae.fill, roughness: 0.8, fog: !1 }),
+    t = new s.MeshStandardMaterial({ color: Ae.deep, roughness: 0.9, fog: !1 });
   Object.entries(Y.col).forEach(([n, i]) => {
     const r = Hr(new s.ExtrudeGeometry(Gr(i), { depth: Xa, bevelEnabled: !1, curveSegments: 1 })),
       d = new s.Mesh(r, [e, t]);
     ((d.position.y = 0.006),
       (d.scale.y = 0.001),
       (d.visible = !1),
-      (d.castShadow = !0),
+      (d.castShadow = d.receiveShadow = !0),
       (d.name = "Terr_" + n),
       he.add(d),
       (rt[n] = d));
@@ -8025,6 +8260,7 @@ function Ir() {
     o.position.copy(Ta(a[0], a[1], 0.006 - 0.04)),
     (o.scale.y = 0.001),
     (o.visible = !1),
+    (o.castShadow = o.receiveShadow = !0),
     he.add(o),
     (rt.kiautschou = o));
 }
@@ -8533,10 +8769,11 @@ function Bn(e, t, a, o) {
       let f = t === "voyage" ? 0.02 : Math.max(0, h - 0.28);
       for (; f < h && !b(f); ) f += 0.002;
       const p = a + r * 0.5,
-        g = { u: f };
+        U = !ga() && i.o > 0.02 ? i.u : ga() ? h : f,
+        g = { u: U };
       ((i.ua = f),
         (i.ub = h),
-        (i.u = ga() ? h : f),
+        (i.u = U),
         i.o < 0.02 && (i._snap = !0),
         yo(i),
         (i.tw = [cs(i, 1, 0.8, p)]));
@@ -9159,7 +9396,8 @@ const bs = Ie("z_palm").then((e) => {
       const w = k.curve.getLength(),
         A = 0.42 / w,
         C = 1 - 0.15 / w;
-      v.leaving || (v.uu = A + (C - A) * s.MathUtils.clamp(z, 0, 1));
+      if (v.leaving) v._go = 0;
+      else if (z > 0.08 && !v._go) ((v._go = 1), (v._t0 = performance.now()), (v.uu = A));
       const D = v.uu || A,
         j = v.leaving
           ? s.MathUtils.smoothstep(z, 0, 1)
@@ -9180,6 +9418,13 @@ const bs = Ie("z_palm").then((e) => {
       }
       const v = Lt[1];
       if (!v || !t.visible) return;
+      if (y._go) {
+        const le2 = v.curve.getLength(),
+          u0 = 0.42 / le2,
+          u1 = 1 - 0.15 / le2,
+          tt = Math.min(1, (performance.now() - y._t0) / 22e3);
+        ((y.uu = u0 + (u1 - u0) * tt), T(v, y, y.uu));
+      }
       const z = performance.now() / 1e3,
         k = Math.min(0.1, z - (p || z));
       p = z;
@@ -10265,6 +10510,69 @@ const sc = (() => {
           (e.visible = h > 0.005));
       }));
   })());
+
+(() => {
+  const e = {
+    togo: [
+      ["z_crate", { L: 0.07, env: 0.4 }, 0.2, 0.14, 0.8],
+      ["sack", { H: 0.085, env: 0.3 }, 0.28, -0.16, 2.1],
+      ["z_pith", { L: 0.065, env: 0.4 }, -0.18, 0.2, 0.5],
+      ["bale", { L: 0.1, env: 0.3 }, -0.24, -0.12, 1.3],
+    ],
+    kamerun: [
+      ["z_crate", { L: 0.08, env: 0.4 }, -0.22, 0.18, 1.1],
+      ["z_crate", { L: 0.055, env: 0.4 }, -0.12, 0.28, -0.4],
+      ["sack", { H: 0.09, env: 0.3 }, 0.26, 0.1, 0.7],
+      ["z_palm", { H: 0.32, env: 0.35 }, 0.34, -0.22, 1.8],
+    ],
+    dswa: [
+      ["z_pith", { L: 0.08, env: 0.4 }, 0.32, 0.18, 0.9],
+      ["z_crate", { L: 0.075, env: 0.4 }, -0.28, 0.24, 2.4],
+      ["sack", { H: 0.08, env: 0.3 }, 0.16, -0.3, 0.2],
+      ["z_wagon", { L: 0.22, env: 0.4 }, -0.4, -0.18, 1.15],
+    ],
+    neuguinea: [
+      ["z_palm", { H: 0.36, env: 0.35 }, 0.42, 0.16, 0.6],
+      ["z_palm", { H: 0.28, env: 0.35 }, 0.18, -0.34, 2.3],
+      ["z_crate", { L: 0.07, env: 0.4 }, -0.2, 0.26, 1.4],
+      ["z_pith", { L: 0.06, env: 0.4 }, -0.3, -0.14, -0.5],
+    ],
+    doa: [
+      ["z_crate", { L: 0.065, env: 0.4 }, 0.55, 0.22, 0.85],
+      ["sack", { H: 0.08, env: 0.3 }, 0.42, -0.3, 1.7],
+      ["bale", { L: 0.11, env: 0.3 }, -0.5, 0.28, 0.4],
+      ["z_wagon", { L: 0.18, env: 0.4 }, 0.7, -0.45, 2.05],
+    ],
+    kiautschou: [
+      ["z_crate", { L: 0.06, env: 0.4 }, 0.16, 0.12, 1.2],
+      ["z_crate", { L: 0.05, env: 0.4 }, 0.22, -0.08, -0.3],
+      ["sack", { H: 0.07, env: 0.3 }, -0.14, 0.18, 2.2],
+      ["z_pith", { L: 0.055, env: 0.4 }, -0.18, -0.14, 0.6],
+    ],
+  };
+  Object.entries(e).forEach(([t, a]) => {
+    a.forEach((o, n) => {
+      const [i, r, d, b, h] = o,
+        f = new s.Group(),
+        p = Qe(...Y.pts[t]);
+      f.position.set(p.x + d, ae(p.x + d, p.z + b), p.z + b);
+      (f.rotation.y = h);
+      (f.visible = !1);
+      he.add(f);
+      Ie(i)
+        .then((g) => {
+          const E = Ze(g.clone ? g.clone(!0) : g, r);
+          (f.add(E), V());
+        })
+        .catch(() => {});
+      vt("Prop_" + t + "_" + n, [t], f, (g, E) => {
+        const m = s.MathUtils.clamp(E, 0, 1),
+          x = 1 - Math.pow(1 - m, 3);
+        (f.scale.setScalar(Math.max(x, 0.001)), (f.visible = m > 0.02));
+      });
+    });
+  });
+})();
 const cc = [
   {
     name: "Baumwollballen",
@@ -11657,7 +11965,9 @@ const Fe = (() => {
             c.y > c.y0 + 0.06 &&
               ((c.ph = 2), (c.vt = c.v), (c.tr = 0), (c.st = ka(18, 28)), (c.nw = 0), ei(c)));
         } else if (c.ph === 2) {
-          ((c.st -= l), sn(c, c.wx, c.wz, c.tmax, l, !0), rn(c, l, c.wy + c.dy, 0.1));
+          ((c.st -= l),
+            sn(c, c.wx + Math.sin(c.t * 0.31 + c.id) * 0.22, c.wz + Math.cos(c.t * 0.27 + c.id * 1.3) * 0.22, c.tmax, l, !0),
+            rn(c, l, c.wy + c.dy + Math.sin(c.t * 0.4 + c.id) * 0.07, 0.1));
           {
             const u = Math.hypot(c.wx - c.x, c.wz - c.z),
               S = Math.abs(Ma(Math.atan2(c.wx - c.x, c.wz - c.z) - c.hd));
@@ -14411,6 +14721,7 @@ function Ct(e, { first: t = !1 } = {}) {
   const a = ze;
   ze = e;
   const o = le[e];
+  kpHold = performance.now() + 400;
   Ac(e);
   const n = !t && !(Ne && Ne.isActive()) ? ut.EXIT_LEAD : 0;
   let i = o.flyDur || ut.FLY_DURATION;
@@ -14467,6 +14778,7 @@ function Ct(e, { first: t = !1 } = {}) {
       roll: o.roll || 0,
       delay: n,
     });
+  kpL.tween(a, e, i, n);
   if (
     (Pn(),
     o.links && (Zo = R.delayedCall(n + i + 0.35, () => Ds(e))),
@@ -14764,7 +15076,20 @@ function Ct(e, { first: t = !1 } = {}) {
     Qc(e),
     Bt(n + i + 1.6));
 }
+let kpHold = 0;
+const kpNavEl = (e) => {
+  const t = e.target;
+  return !!(t && t.closest && t.closest("#foot, #head, #ticks, #bar, #count, a, button, [data-card], nav, .hlist"));
+};
+const kpBusy = (e) => {
+  if (performance.now() >= kpHold) return !1;
+  if (e && (e.key === "Tab" || kpNavEl(e))) return !1;
+  e && e.preventDefault && e.preventDefault();
+  return !0;
+};
 (addEventListener("keydown", (e) => {
+  if (e.key === "Tab") return;
+  if (kpBusy(e)) return;
   const t = e.key;
   t === "ArrowRight" || t === " " || t === "PageDown" || t === "Enter"
     ? (e.preventDefault(), Ct(ze + 1))
@@ -14782,12 +15107,37 @@ function Ct(e, { first: t = !1 } = {}) {
                 : document.documentElement.requestFullscreen?.().catch(() => {}));
 }),
   addEventListener("click", (e) => {
-    e.button === 0 && Ct(ze + 1);
+    if (e.button !== 0 || kpNavEl(e) || kpBusy(e)) return;
+    Ct(ze + 1);
   }),
   addEventListener("contextmenu", (e) => {
-    (e.preventDefault(), Ct(ze - 1));
+    if (kpNavEl(e)) return;
+    (e.preventDefault(), kpBusy(e) || Ct(ze - 1));
   }),
-  addEventListener("wheel", (e) => e.preventDefault(), { passive: !1 }));
+  addEventListener(
+    "wheel",
+    (e) => {
+      (e.preventDefault(), kpBusy(e) || (Math.abs(e.deltaY) > 8 && Ct(ze + (e.deltaY > 0 ? 1 : -1))));
+    },
+    { passive: !1 },
+  ),
+  addEventListener(
+    "touchstart",
+    (e) => {
+      window._kpTch = e.changedTouches[0] && e.changedTouches[0].clientY;
+    },
+    { passive: !0 },
+  ),
+  addEventListener(
+    "touchend",
+    (e) => {
+      const t = e.changedTouches[0];
+      if (!t || window._kpTch == null || kpNavEl(e) || kpBusy(e)) return;
+      const a = window._kpTch - t.clientY;
+      Math.abs(a) > 40 && Ct(ze + (a > 0 ? 1 : -1));
+    },
+    { passive: !0 },
+  ));
 function Yc(e, t) {
   e !== Be.mode &&
     ((Be.mode = e), t && (Be.auto = !1), document.body.classList.toggle("low", e === "low"), ki());
